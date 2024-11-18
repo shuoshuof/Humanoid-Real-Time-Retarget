@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from poselib.poselib.core.rotation3d import *
-from poselib.poselib.skeleton.skeleton3d import SkeletonMotion,SkeletonState,SkeletonTree
 from typing import Dict
 import copy
 from scipy.spatial.transform import Rotation as sRot
@@ -30,14 +29,14 @@ def coord_transform(p,order:list=None,dir=None):
     return p
 
 @torch.jit.script
-def cal_joint_quat(standard_pose_local_translation, motion_local_translation):
+def cal_joint_quat(zero_pose_local_translation, motion_local_translation):
     r"""
     refer to https://igl.ethz.ch/projects/ARAP/svd_rot.pdf
-    :param standard_pose_local_translation:
+    :param zero_pose_local_translation:
     :param motion_local_translation:
     :return: quat
     """
-    A = torch.einsum('bij,bjk->bik', motion_local_translation.permute(0, 2, 1), standard_pose_local_translation)
+    A = torch.einsum('bij,bjk->bik', motion_local_translation.permute(0, 2, 1), zero_pose_local_translation)
     U, _, Vt = torch.linalg.svd(A)
     R_matrix = torch.einsum('bij,bjk->bik', U, Vt)
 
@@ -50,14 +49,20 @@ def cal_joint_quat(standard_pose_local_translation, motion_local_translation):
     quats = quat_from_rotation_matrix(R_matrix)
     return quats
 
-def quat_in_xyz_axis(q):
+def quat_in_xyz_axis(q,seq:str='xyz'):
     r = sRot.from_quat(q)
-    euler_angles = r.as_euler('xyz', degrees=False)
+    euler_angles = r.as_euler(seq, degrees=False)
     quat_x = sRot.from_euler('x', euler_angles[...,0], degrees=False).as_quat()
     quat_y = sRot.from_euler('y', euler_angles[...,1], degrees=False).as_quat()
     quat_z = sRot.from_euler('z', euler_angles[...,2], degrees=False).as_quat()
 
     return torch.Tensor(quat_x), torch.Tensor(quat_y), torch.Tensor(quat_z)
+
+
+
+def cal_spherical_angle(vector,vector0,parent_global_rotation):
+    pass
+
 
 @torch.jit.script
 def exp_map_to_quat(exp_map):
@@ -90,15 +95,4 @@ def quat_slerp(q0, q1, t):
     return new_q
 
 
-def rescale_motion_to_standard_size(motion_global_translation, standard_skeleton:SkeletonTree):
-    rescaled_motion_global_translation = motion_global_translation.clone()
-    for joint_idx,parent_idx in enumerate(standard_skeleton.parent_indices):
-        if parent_idx == -1:
-            pass
-        else:
-            scale =  torch.linalg.norm(motion_global_translation[:,joint_idx,:]-motion_global_translation[:,parent_idx,:],dim=1)/ \
-                     torch.linalg.norm(standard_skeleton.local_translation[joint_idx,:],dim=0)
-            rescaled_motion_global_translation[:,joint_idx,:] = rescaled_motion_global_translation[:,parent_idx,:] + \
-                (motion_global_translation[:,joint_idx,:]-motion_global_translation[:,parent_idx,:])/scale.unsqueeze(1).repeat(1,3)
-    return rescaled_motion_global_translation
 
