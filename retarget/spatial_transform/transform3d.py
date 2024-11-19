@@ -58,7 +58,6 @@ def quat_in_xyz_axis(q,seq:str='xyz'):
 
     return torch.Tensor(quat_x), torch.Tensor(quat_y), torch.Tensor(quat_z)
 
-
 @torch.jit.script
 def proj_in_plane(v, n):
     r"""
@@ -79,6 +78,7 @@ def proj_in_plane(v, n):
 def radians_between_vecs(v1,v2,n):
     r"""
     calculate the angle between two vectors
+    pay attention the direction of the normal
     :param v1:
     :param v2:
     :param n:
@@ -98,6 +98,49 @@ def radians_between_vecs(v1,v2,n):
     angle = angle*torch.sign(direction)
 
     return angle
+
+# # @torch.jit.script
+# def proj_in_plane(v, n):
+#     r"""
+#     project a vector in a plane
+#     :param v: vector
+#     :param n:  the normal of the plane
+#     :return:
+#     """
+#     n_norm = torch.linalg.norm(n,dim=-1)
+#     assert torch.all(n_norm>1e-6,dim=-1)
+#
+#     # v_proj_n = (torch.dot(v,n.view(-1,3))/n_norm**2)*n
+#     v_proj_n = (torch.sum(v*n.view(-1,3),dim=-1)/n_norm**2).unsqueeze(-1)*n.view(-1,3)
+#     assert v_proj_n.shape == v.shape
+#     v_proj = v - v_proj_n
+#     return v_proj
+#
+# # @torch.jit.script
+# def radians_between_vecs(v1,v2,n):
+#     r"""
+#     calculate the angle between two vectors
+#     :param v1:
+#     :param v2:
+#     :param n:
+#     :return:
+#     """
+#
+#     v1 = v1 / torch.linalg.norm(v1,dim=-1)
+#     v2 = v2 / torch.linalg.norm(v2,dim=-1).view(-1,1)
+#     normal = n / torch.linalg.norm(n,dim=-1)
+#
+#     # cos_theta = torch.dot(v1, v2).clamp(-1.0, 1.0)
+#     cos_theta = torch.sum(v1*v2,dim=-1).clamp(-1.0, 1.0)
+#     angle = torch.acos(cos_theta)
+#
+#     cross = torch.cross(v1.view(-1,3), v2.view(-1,3))
+#     # direction = torch.dot(normal, cross)
+#     direction = torch.sum(normal * cross, dim=-1)
+#
+#     angle = angle*torch.sign(direction)
+#
+#     return angle
 
 
 @torch.jit.script
