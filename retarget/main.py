@@ -87,6 +87,32 @@ class RetargetHuV5fromMocap(Retarget):
 
         return pitch_joint_quat, roll_joint_quat
 
+    def cal_elbowP_and_shoulderY(self, v1, v0, parent_global_rotation):
+        axis = torch.eye(3, dtype=torch.float32)
+        parent_quat_inv = quat_inverse(parent_global_rotation)
+
+        v1 = quat_rotate(parent_quat_inv, v1).squeeze(0)
+
+        # v1 proj in xoy plane
+        v1_proj = proj_in_plane(v1, axis[2])
+        v0_proj = proj_in_plane(v0, axis[2])
+
+        # shoulder yaw
+        theta1 = radians_between_vecs(axis[0], v1_proj, n=axis[2])
+        theta0 = radians_between_vecs(axis[0], v0_proj, n=axis[2])
+
+        shoulder_yaw_quat = quat_from_angle_axis(torch.tensor([theta1 - theta0]), axis[2])
+
+        # elbow pitch
+        phi1 = radians_between_vecs(v1_proj, v1, n=torch.cross(axis[2], v1_proj))
+        phi0 = radians_between_vecs(v0_proj, v0, n=torch.cross(axis[2], v0_proj))
+
+        print(f"rotation: {theta1 - theta0}, {phi1 - phi0}")
+
+        elbow_pitch_quat = quat_from_angle_axis(phi1 - phi0, axis[1])
+
+        return shoulder_yaw_quat, elbow_pitch_quat
+
     def _rebuild_with_vtrdyn_zero_pose(self,motion_global_translation,fps=30)->SkeletonState:
         motion_length, num_joint, _ = motion_global_translation.shape
 
@@ -191,6 +217,28 @@ class RetargetHuV5fromMocap(Retarget):
 
             robot_local_rotation[frame,21] = right_shoulder_pitch
             robot_local_rotation[frame,22] = right_shoulder_roll
+
+            left_elbow_parent_quat = quat_mul_three(mocap_global_rotation[frame,10],left_shoulder_pitch,left_shoulder_roll)
+
+            left_shoulder_yaw, left_elbow_pitch = self.cal_elbowP_and_shoulderY(
+                mocap_global_translation[frame,20]-mocap_global_translation[frame,19],
+                self.mocap_zero_pose.local_translation[20],
+                left_elbow_parent_quat
+            )
+
+            right_elbow_parent_quat = quat_mul_three(mocap_global_rotation[frame,10],right_shoulder_pitch,right_shoulder_roll)
+
+            right_shoulder_yaw, right_elbow_pitch = self.cal_elbowP_and_shoulderY(
+                mocap_global_translation[frame,16]-mocap_global_translation[frame,15],
+                self.mocap_zero_pose.local_translation[16],
+                right_elbow_parent_quat
+            )
+
+            robot_local_rotation[frame,14] = left_shoulder_yaw
+            robot_local_rotation[frame,15] = left_elbow_pitch
+            robot_local_rotation[frame,23] = right_shoulder_yaw
+            robot_local_rotation[frame,24] = right_elbow_pitch
+
 
             print(f'Frame {frame}: {time.time()-start:.5f} s')
 
