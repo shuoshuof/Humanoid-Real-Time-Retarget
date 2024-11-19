@@ -12,6 +12,8 @@ import time
 
 import pickle
 
+import torch
+
 from poselib.poselib.skeleton.skeleton3d import SkeletonState,SkeletonMotion
 from poselib.poselib.visualization.common import plot_skeleton_H
 
@@ -45,9 +47,45 @@ class Retarget(ABC):
         return rescaled_motion_global_translation
 
 
+
 class RetargetHuV5fromMocap(Retarget):
     def __init__(self, mocap_zero_pose:RobotZeroPose, target_zero_pose:RobotZeroPose):
         super().__init__(mocap_zero_pose, target_zero_pose)
+
+    def cal_shoulder_spherical_joint_rotation(self,v1, v0, parent_global_rotation):
+        r"""
+        calculate shoulder spherical joint rotation
+        the order is pitch and roll. the raw need to use the child joint to cal
+        :param v1:
+        :param v0:
+        :param parent_global_rotation:
+        :param plane:
+        :return:
+        """
+        axis = torch.eye(3, dtype=torch.float32)
+
+        parent_quat_inv = quat_inverse(parent_global_rotation)
+
+        v1 = quat_rotate(parent_quat_inv, v1).squeeze(0)
+
+        # v1 proj in xoz plane
+        v1_proj = proj_in_plane(v1, axis[1])
+
+        v0_proj = proj_in_plane(v0, axis[1])
+
+        theta1 = radians_between_vecs(axis[0], v1_proj, n=axis[1])
+        theta0 = radians_between_vecs(axis[0], v0_proj, n=axis[1])
+
+        pitch_joint_quat = quat_from_angle_axis(torch.tensor([theta1 - theta0]), axis[1])
+
+        phi1 = radians_between_vecs(v1_proj, v1, n=torch.cross(v1_proj, axis[1]))
+        phi0 = radians_between_vecs(v0_proj, v0, n=torch.cross(v0_proj, axis[1]))
+
+        print(f"rotation: {theta1 - theta0}, {phi1 - phi0}")
+
+        roll_joint_quat = quat_from_angle_axis(phi1 - phi0, axis[0])
+
+        return pitch_joint_quat, roll_joint_quat
 
     def _rebuild_with_vtrdyn_zero_pose(self,motion_global_translation,fps=30)->SkeletonState:
         motion_length, num_joint, _ = motion_global_translation.shape
@@ -109,17 +147,16 @@ class RetargetHuV5fromMocap(Retarget):
 
         mocap_motion = self._rebuild_with_vtrdyn_zero_pose(motion_global_translation)
 
-        # plot_skeleton_H([mocap_motion])
 
         mocap_local_rotation = mocap_motion.local_rotation
         mocap_global_rotation = mocap_motion.global_rotation
+        mocap_global_translation = mocap_motion.global_translation
 
-        # vis_vtrdyn(motion_global_translation)
 
         motion_length = motion_global_translation.shape[0]
         robot_local_rotation = torch.tensor([[[0, 0, 0, 1.]]*self.target_zero_pose.num_joints]*motion_length)
 
-        root_rotation = mocap_global_rotation[:,0]
+        robot_root_translation = torch.zeros_like(mocap_motion.root_translation)
 
 
         # root_rotation = cal_joint_quat(
@@ -135,40 +172,63 @@ class RetargetHuV5fromMocap(Retarget):
         # torso_rotation = quat_yaw_rotation(torso_rotation)
         #
 
-        # mocap joint 18 left shoulder
-        left_shoulder_rotation = mocap_local_rotation[:,18]
-        robot_left_shoulder_roll, robot_left_shoulder_pitch, _ = quat_in_xyz_axis(left_shoulder_rotation,'zyx')
+        for frame in range(motion_length):
+            start = time.time()
+            left_shoulder_pitch, left_shoulder_roll = self.cal_shoulder_spherical_joint_rotation(
+                mocap_global_translation[frame,19]-mocap_global_translation[frame,18],
+                self.mocap_zero_pose.local_translation[19],
+                mocap_global_rotation[frame,10]
+            )
 
-        robot_local_rotation[:,12] = robot_left_shoulder_pitch
-        robot_local_rotation[:,13] = robot_left_shoulder_roll
+            right_shoulder_pitch, right_shoulder_roll = self.cal_shoulder_spherical_joint_rotation(
+                mocap_global_translation[frame,15]-mocap_global_translation[frame,14],
+                self.mocap_zero_pose.local_translation[15],
+                mocap_global_rotation[frame,10]
+            )
 
-        # mocap joint 14 right shoulder
-        right_shoulder_rotation = mocap_local_rotation[:,14]
-        robot_right_shoulder_roll, robot_right_shoulder_pitch, _ = quat_in_xyz_axis(right_shoulder_rotation,'zyx')
+            robot_local_rotation[frame,12] = left_shoulder_pitch
+            robot_local_rotation[frame,13] = left_shoulder_roll
 
-        robot_local_rotation[:,21] = robot_right_shoulder_pitch
-        robot_local_rotation[:,22] = robot_right_shoulder_roll
+            robot_local_rotation[frame,21] = right_shoulder_pitch
+            robot_local_rotation[frame,22] = right_shoulder_roll
 
-        left_elbow_rotation = mocap_local_rotation[:,19]
-        _,left_elbow_pitch,left_shoulder_yaw = quat_in_xyz_axis(left_elbow_rotation,'XYZ')
-        robot_local_rotation[:,14] = left_shoulder_yaw
-        robot_local_rotation[:,15] = left_elbow_pitch
+            print(f'Frame {frame}: {time.time()-start:.5f} s')
 
-        right_elbow_rotation = mocap_local_rotation[:,15]
-        _,right_elbow_pitch,right_shoulder_yaw = quat_in_xyz_axis(right_elbow_rotation,'XYZ')
-        robot_local_rotation[:,23] = right_shoulder_yaw
-        robot_local_rotation[:,24] = right_elbow_pitch
+
+        # # mocap joint 18 left shoulder
+        # left_shoulder_rotation = mocap_local_rotation[:,18]
+        # robot_left_shoulder_roll, robot_left_shoulder_pitch, _ = quat_in_xyz_axis(left_shoulder_rotation,'ZXY')
+        #
+        # robot_local_rotation[:,12] = robot_left_shoulder_pitch
+        # robot_local_rotation[:,13] = robot_left_shoulder_roll
+        #
+        # # mocap joint 14 right shoulder
+        # right_shoulder_rotation = mocap_local_rotation[:,14]
+        # robot_right_shoulder_roll, robot_right_shoulder_pitch, _ = quat_in_xyz_axis(right_shoulder_rotation,'ZXY')
+        #
+        # robot_local_rotation[:,21] = robot_right_shoulder_pitch
+        # robot_local_rotation[:,22] = robot_right_shoulder_roll
+
+        # left_elbow_rotation = mocap_local_rotation[:,19]
+        # _,left_elbow_pitch,left_shoulder_yaw = quat_in_xyz_axis(left_elbow_rotation,'ZYX')
+        # robot_local_rotation[:,14] = left_shoulder_yaw
+        # robot_local_rotation[:,15] = left_elbow_pitch
+        #
+        # right_elbow_rotation = mocap_local_rotation[:,15]
+        # _,right_elbow_pitch,right_shoulder_yaw = quat_in_xyz_axis(right_elbow_rotation,'ZYX')
+        # robot_local_rotation[:,23] = right_shoulder_yaw
+        # robot_local_rotation[:,24] = right_elbow_pitch
 
         retargeted_state = SkeletonState.from_rotation_and_root_translation(
             self.target_zero_pose.skeleton_tree,
             robot_local_rotation,
-            root_rotation,
+            robot_root_translation,
             is_local=True
         )
 
         retargeted_motion = SkeletonMotion.from_skeleton_state(retargeted_state,fps=30)
 
-        plot_skeleton_H([retargeted_motion])
+        plot_skeleton_H([mocap_motion,retargeted_motion])
 
 
 
@@ -188,7 +248,7 @@ if __name__ == '__main__':
 
     with open('asset/zero_pose/vtrdyn_zero_pose.pkl', 'rb') as f:
         vtrdyn_zero_pose = pickle.load(f)
-
+    # plot_skeleton_H([vtrdyn_zero_pose])
 
 
     vtrdyn_zero_pose = RobotZeroPose.from_skeleton_state(vtrdyn_zero_pose)
