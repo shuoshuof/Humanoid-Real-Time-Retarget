@@ -59,9 +59,45 @@ def quat_in_xyz_axis(q,seq:str='xyz'):
     return torch.Tensor(quat_x), torch.Tensor(quat_y), torch.Tensor(quat_z)
 
 
+@torch.jit.script
+def proj_in_plane(v, n):
+    r"""
+    project a vector in a plane
+    :param v: vector
+    :param n:  the normal of the plane
+    :return:
+    """
+    n_norm = torch.linalg.norm(n)
+    assert n_norm>1e-6
 
-def cal_spherical_angle(vector,vector0,parent_global_rotation):
-    pass
+    v_proj_n = (torch.dot(v,n)/n_norm**2)*n
+    v_proj = v - v_proj_n
+
+    return v_proj
+
+@torch.jit.script
+def radians_between_vecs(v1,v2,n):
+    r"""
+    calculate the angle between two vectors
+    :param v1:
+    :param v2:
+    :param n:
+    :return:
+    """
+
+    v1 = v1 / torch.linalg.norm(v1)
+    v2 = v2 / torch.linalg.norm(v2)
+    normal = n / torch.linalg.norm(n)
+
+    cos_theta = torch.dot(v1, v2).clamp(-1.0, 1.0)
+    angle = torch.acos(cos_theta)
+
+    cross = torch.cross(v1, v2)
+    direction = torch.dot(normal, cross)
+
+    angle = angle*torch.sign(direction)
+
+    return angle
 
 
 @torch.jit.script
