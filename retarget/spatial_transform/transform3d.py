@@ -173,5 +173,13 @@ def quat_slerp(q0, q1, t):
 
     return new_q
 
+@torch.jit.script
+def quat_to_dof_pos(quat,dof_axis):
+    # type: (Tensor, List[int]) -> Tensor
+    axis = torch.eye(3)
+    axis = axis[dof_axis]
+    exp_map = quat_to_exp_map(quat)
+    dof_pos = exp_map*axis
+    return dof_pos
 
 

@@ -24,6 +24,7 @@ from retarget.utils import get_mocap_translation
 from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch, to_numpy
 
+from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
 
 class BaseHumanoidRetarget(ABC):
     def __init__(self, source_zero_pose: RobotZeroPose, target_zero_pose: RobotZeroPose):
@@ -52,7 +53,17 @@ class BaseHumanoidRetarget(ABC):
 class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
     def __init__(self, mocap_zero_pose: RobotZeroPose, target_zero_pose: RobotZeroPose):
         super().__init__(mocap_zero_pose, target_zero_pose)
-
+        self._motion_local_rotation = []
+        self._motion_dof_pos = []
+    @property
+    def motion_local_rotation(self):
+        return torch.stack(self._motion_local_rotation).clone()
+    @property
+    def motion_dof_pos(self):
+        return torch.stack(self._motion_dof_pos).clone()
+    @property
+    def motion_length(self):
+        return len(self._motion_local_rotation)
     def _cal_shoulderPR(self,v1, v0, parent_global_rotation):
         return cal_shoulderPR(v1, v0, parent_global_rotation)
     def _cal_elbowP_and_shoulderY(self, v1, v0, parent_global_rotation):
@@ -64,7 +75,7 @@ class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
 
         # mocap_motion = self._rebuild_with_vtrdyn_zero_pose(motion_global_translation)
 
-        robot_local_rotation = torch.tensor([[0,0,0,1]]*self.target_zero_pose.num_joints)
+        robot_local_rotation = torch.tensor([[0,0,0,1]]*self.target_zero_pose.num_joints,dtype=torch.float32)
         robot_dof_pos = torch.zeros(self.target_zero_pose.num_joints)
 
         # mocap cheat global rotation
@@ -84,8 +95,6 @@ class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
             self.source_zero_pose.local_translation[15],
             joint10_global_rotation
         )
-
-
 
         robot_local_rotation[12] = left_shoulder_pitch
         robot_local_rotation[13] = left_shoulder_roll
@@ -114,8 +123,12 @@ class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
         robot_local_rotation[23] = right_shoulder_yaw
         robot_local_rotation[24] = right_elbow_pitch
 
+        dof_pos = quat_to_dof_pos(robot_local_rotation[1:],Hu_DOF_AXIS)
 
-        # robot_dof_pos[[12,13,21,22,14,15,23,24]] = left_shoulder_pitch,left_shoulder_roll,right_shoulder_pitch,right_shoulder_roll,left_shoulder_yaw,left_elbow_pitch,right_shoulder_yaw,right_elbow_pitch
+        self._motion_local_rotation.append(robot_local_rotation)
+        self._motion_dof_pos.append(dof_pos)
+
+        return robot_local_rotation, dof_pos
 
 @torch.jit.script
 def cal_elbowP_and_shoulderY(v1, v0, parent_global_rotation):
@@ -140,7 +153,6 @@ def cal_elbowP_and_shoulderY(v1, v0, parent_global_rotation):
     phi0 = radians_between_vecs(v0_proj, v0, n=torch.cross(axis[2], v0_proj))
 
     elbow_pitch_quat = quat_from_angle_axis(phi1 - phi0, axis[1])
-
     return shoulder_yaw_quat, elbow_pitch_quat\
 
 @torch.jit.script
@@ -191,8 +203,19 @@ if __name__ == '__main__':
 
     hu_retarget = HuUpperBodyFromMocapRetarget(vtrdyn_zero_pose,hu_zero_pose)
 
-    for i in range(100):
+    for i in range(200):
         start = time.time()
         hu_retarget.retarget_from_global_translation(motion_global_translation[i])
         end = time.time()
         print(f'Time cost {end-start:.5f} s')
+
+    state = SkeletonState.from_rotation_and_root_translation(
+        hu_zero_pose.skeleton_tree,
+        hu_retarget.motion_local_rotation,
+        torch.zeros((hu_retarget.motion_length, 3)),
+        is_local=True
+    )
+
+    motion = SkeletonMotion.from_skeleton_state(state,fps=30)
+    plot_skeleton_H([motion])
+
