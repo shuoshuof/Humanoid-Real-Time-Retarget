@@ -136,6 +136,9 @@ class Env:
                                      env,
                                      gymapi.Vec3(*self.cam_pos),
                                      gymapi.Vec3(*self.cam_pos + self.cam_lookat_offset))
+        cam_pos = gymapi.Vec3(-0.5, 0, 2)
+        cam_target = gymapi.Vec3(0, 0, 1)
+        self.gym.set_camera_location(center_camera_handle,env,cam_pos,cam_target)
         return center_camera_handle
     def _add_table(self,env,env_index):
         table_asset_options = gymapi.AssetOptions()

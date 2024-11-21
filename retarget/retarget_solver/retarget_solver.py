@@ -68,7 +68,7 @@ class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
         return cal_shoulderPR(v1, v0, parent_global_rotation)
     def _cal_elbowP_and_shoulderY(self, v1, v0, parent_global_rotation):
         return cal_elbowP_and_shoulderY(v1, v0, parent_global_rotation)
-    def retarget_from_global_translation(self, source_global_translation):
+    def retarget_from_global_translation(self, source_global_translation:torch.Tensor):
         source_global_translation = coord_transform(source_global_translation, dir=torch.Tensor([-1, -1, 1]))
 
         # source_global_translation = self.rescale_motion_to_standard_size(source_global_translation, self.source_zero_pose)
