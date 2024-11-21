@@ -73,6 +73,7 @@ class Env:
         self.target_handles = []
         self.left_cam_handles = []
         self.right_cam_handles = []
+        self.center_cam_handles = []
         # create and populate the environments
         for i in range(num_envs):
             env_handle = self.gym.create_env(self.sim, env_lower, env_upper,num_per_row)
@@ -93,6 +94,10 @@ class Env:
             left_camera_handle,right_camera_handle = self._create_eye_cameras(env_handle)
             self.left_cam_handles.append(left_camera_handle)
             self.right_cam_handles.append(right_camera_handle)
+
+            center_camera_handle = self._create_center_camera(env_handle)
+            self.center_cam_handles.append(center_camera_handle)
+
     def _add_robot(self, env, env_index):
         asset_root = "asset/hu/"
         asset_path = 'hu_v5.urdf'
@@ -122,7 +127,16 @@ class Env:
 
         return robot_handle
 
-
+    def _create_center_camera(self, env):
+        camera_props = gymapi.CameraProperties()
+        camera_props.width = 1280
+        camera_props.height = 720
+        center_camera_handle = self.gym.create_camera_sensor(env, camera_props)
+        self.gym.set_camera_location(center_camera_handle,
+                                     env,
+                                     gymapi.Vec3(*self.cam_pos),
+                                     gymapi.Vec3(*self.cam_pos + self.cam_lookat_offset))
+        return center_camera_handle
     def _add_table(self,env,env_index):
         table_asset_options = gymapi.AssetOptions()
         table_asset_options.disable_gravity = True
@@ -186,6 +200,7 @@ class Env:
         cam_pos = gymapi.Vec3(-0.5, 0, 1.7)
         cam_target = gymapi.Vec3(0, 0, 1)
         self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
+        # self.viewer_cam_handle = self.gym.get_viewer_camera_handle(self.viewer)
 
     def get_eye_cameras_image(self,env_idx,show=False):
         env = self.env_handles[env_idx]
