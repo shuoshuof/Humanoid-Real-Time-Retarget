@@ -27,8 +27,8 @@ class Env:
         self.cam_pos = np.array([-0.6, 0, 1.6])
 
         self.gym = gymapi.acquire_gym()
-
         self.create_sim()
+
     def create_sim(self):
         sim_params = self.set_sim_parameters()
         self.sim = self.gym.create_sim(0, 0, gymapi.SIM_PHYSX, sim_params)
@@ -100,6 +100,8 @@ class Env:
         asset_options = gymapi.AssetOptions()
         asset_options.fix_base_link = True
         asset_options.default_dof_drive_mode = gymapi.DOF_MODE_POS
+        asset_options.mesh_normal_mode = gymapi.COMPUTE_PER_VERTEX
+        asset_options.vhacd_enabled = True
 
         asset = self.gym.load_asset(self.sim, asset_root, asset_path, asset_options)
         self.num_dof = self.gym.get_asset_dof_count(asset)
@@ -112,6 +114,11 @@ class Env:
         self.root_state_tensor = self.gym.acquire_actor_root_state_tensor(self.sim)
         self.gym.refresh_actor_root_state_tensor(self.sim)
         self.root_states = gymtorch.wrap_tensor(self.root_state_tensor)
+
+        self.dof_dict = {value: idx
+                         for (idx, value) in enumerate(self.gym.get_asset_dof_names(asset))}
+        print(self.dof_dict)
+
 
         return robot_handle
 
@@ -176,7 +183,7 @@ class Env:
         return left_camera_handle,right_camera_handle
     def _create_viewer(self):
         self.viewer = self.gym.create_viewer(self.sim, gymapi.CameraProperties())
-        cam_pos = gymapi.Vec3(-1, 0, 2)
+        cam_pos = gymapi.Vec3(-0.5, 0, 1.7)
         cam_target = gymapi.Vec3(0, 0, 1)
         self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
 

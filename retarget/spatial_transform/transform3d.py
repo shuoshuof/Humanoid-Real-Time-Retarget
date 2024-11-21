@@ -180,6 +180,6 @@ def quat_to_dof_pos(quat,dof_axis):
     axis = axis[dof_axis]
     exp_map = quat_to_exp_map(quat)
     dof_pos = exp_map*axis
-    return dof_pos
+    return dof_pos[torch.arange(len(dof_axis)),dof_axis]
 
 
