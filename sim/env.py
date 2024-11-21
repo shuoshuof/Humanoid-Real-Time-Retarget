@@ -10,6 +10,7 @@ from isaacgym import gymapi
 from isaacgym import gymutil
 from isaacgym import gymtorch
 
+import random
 import math
 import numpy as np
 import torch
@@ -156,23 +157,23 @@ class Env:
     def _add_object(self, env, env_idx):
         cube_asset_options = gymapi.AssetOptions()
         cube_asset_options.density = 10
-        cube_asset = self.gym.create_box(self.sim, 0.05, 0.05, 0.05, cube_asset_options)
+        cube_asset = self.gym.create_box(self.sim, 0.07, 0.07, 0.07, cube_asset_options)
 
         pose = gymapi.Transform()
-        pose.p = gymapi.Vec3(-0.3, 0, 1.25)
+        pose.p = gymapi.Vec3(-0.2, random.uniform(-0.1,0.05), 1.3)
         pose.r = gymapi.Quat(0, 0, 0, 1)
-        cube_handle = self.gym.create_actor(env, cube_asset, pose, 'cube', env_idx, )
+        cube_handle = self.gym.create_actor(env, cube_asset, pose, 'cube', env_idx,0,0 )
         color = gymapi.Vec3(1, 0., 0.)
         self.gym.set_rigid_body_color(env, cube_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
         return cube_handle
     def _add_target(self,env,env_idx):
         target_asset_options = gymapi.AssetOptions()
         target_asset_options.density = 10
-        target_asset = self.gym.create_box(self.sim, 0.1, 0.1, 0.0001, target_asset_options)
+        target_asset = self.gym.create_box(self.sim, 0.15, 0.15, 0.00001, target_asset_options)
         pose = gymapi.Transform()
         pose.p = gymapi.Vec3(0, 0, 1.1)
         pose.r = gymapi.Quat(0, 0, 0, 1)
-        target_handle = self.gym.create_actor(env, target_asset, pose, 'target', env_idx, )
+        target_handle = self.gym.create_actor(env, target_asset, pose, 'target', env_idx,0,1 )
         color = gymapi.Vec3(0., 1, 0.)
         self.gym.set_rigid_body_color(env, target_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
         return target_handle

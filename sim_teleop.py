@@ -144,6 +144,7 @@ if __name__ == '__main__':
             # _, dof_pos = hu_retarget.retarget_from_global_translation(motion_global_translation[i])
             dof_state, viewer_img = mocap_control_env.step(dof_pos)
             recorder.record(body_pose,dof_pos,dof_state,viewer_img)
+
             end = time.time()
             # print(f"{end - start:.3f}")
 

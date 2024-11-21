@@ -65,6 +65,7 @@ class MocapRobot(BaseSkeletonRobot):
     def forward(self, body_pos):
         self._generate_geoms(body_pos)
 
+
 if __name__ == '__main__':
     import pickle
     with open('asset/zero_pose/vtrdyn_zero_pose.pkl', 'rb') as f:
