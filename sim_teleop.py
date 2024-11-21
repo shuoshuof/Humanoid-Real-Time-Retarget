@@ -89,7 +89,7 @@ class DataRecorder:
 
     def save(self):
         data_dict = OrderedDict(
-            body_pose=np.stack(self.body_pose),
+            body_pos=np.stack(self.body_pose),
             dof_pos=np.stack(self.dof_pos),
             dof_state=np.stack(self.dof_state),
             img=np.stack(self.img)

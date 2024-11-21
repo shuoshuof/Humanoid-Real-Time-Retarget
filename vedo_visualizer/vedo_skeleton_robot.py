@@ -36,7 +36,7 @@ class BaseSkeletonRobot(ABC):
         plotter.show(*self.geoms)
 
 
-class VtrdynRobot(BaseSkeletonRobot):
+class MocapRobot(BaseSkeletonRobot):
     def __init__(self,parent_indices,node_names,num_joints):
         super().__init__()
         self._parent_indices = parent_indices
@@ -71,5 +71,5 @@ if __name__ == '__main__':
         vtrdyn_zero_pose = pickle.load(f)
 
     vtrdyn_zero_pose = RobotZeroPose.from_skeleton_state(vtrdyn_zero_pose)
-    robot = VtrdynRobot.from_zero_pose(vtrdyn_zero_pose)
+    robot = MocapRobot.from_zero_pose(vtrdyn_zero_pose)
     robot.show()
