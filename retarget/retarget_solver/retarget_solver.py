@@ -6,23 +6,20 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 import pandas as pd
-import numpy as np
 import time
 
 import pickle
 
-import torch
-
 from poselib.poselib.skeleton.skeleton3d import SkeletonState, SkeletonMotion
 from poselib.poselib.visualization.common import plot_skeleton_H
 
-from retarget.robot_kinematics_model import RobotZeroPose
+from robot_kinematics_model import RobotZeroPose
 
 from retarget.utils import get_mocap_translation
 from retarget.spatial_transform.transform3d import *
-from retarget.torch_ext import to_torch, to_numpy
+from retarget.torch_ext import to_torch
 
 from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
 
@@ -49,12 +46,24 @@ class BaseHumanoidRetarget(ABC):
                                                                               :]) / scale.unsqueeze(1).repeat(1, 3)
         return rescaled_motion_global_translation
 
+class WeightedFilter:
+    def __init__(self, alpha=0.3):
+        self.alpha = alpha
+        self.previous_data = None
+    def filter(self, current_data):
+        if self.previous_data is None:
+            self.previous_data = current_data
+        filtered_data = self.alpha * current_data + (1 - self.alpha) * self.previous_data
+        self.previous_data = filtered_data
+        return filtered_data
+
 
 class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
     def __init__(self, mocap_zero_pose: RobotZeroPose, target_zero_pose: RobotZeroPose):
         super().__init__(mocap_zero_pose, target_zero_pose)
         self._motion_local_rotation = []
         self._motion_dof_pos = []
+        self.filter = WeightedFilter(0.5)
     @property
     def motion_local_rotation(self):
         return torch.stack(self._motion_local_rotation).clone()
@@ -124,6 +133,7 @@ class HuUpperBodyFromMocapRetarget(BaseHumanoidRetarget):
         robot_local_rotation[24] = right_elbow_pitch
 
         dof_pos = quat_to_dof_pos(robot_local_rotation[1:],Hu_DOF_AXIS)
+        dof_pos = self.filter.filter(dof_pos)
 
         self._motion_local_rotation.append(robot_local_rotation)
         self._motion_dof_pos.append(dof_pos)

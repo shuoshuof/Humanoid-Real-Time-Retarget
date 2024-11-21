@@ -162,7 +162,7 @@ class Env:
         pose.p = gymapi.Vec3(-0.3, 0, 1.25)
         pose.r = gymapi.Quat(0, 0, 0, 1)
         cube_handle = self.gym.create_actor(env, cube_asset, pose, 'cube', env_idx, )
-        color = gymapi.Vec3(1, 0.5, 0.5)
+        color = gymapi.Vec3(1, 0., 0.)
         self.gym.set_rigid_body_color(env, cube_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
         return cube_handle
     def _add_target(self,env,env_idx):

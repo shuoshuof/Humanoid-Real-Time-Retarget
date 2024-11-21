@@ -5,6 +5,6 @@
 @File ：__init__.py.py
 @Project ：Humanoid-Real-Time-Retarget
 """
-from retarget.robot_kinematics_model.base_robot import RobotZeroPose
+from robot_kinematics_model.base_robot import RobotZeroPose
 
 __all__ = ['RobotZeroPose']

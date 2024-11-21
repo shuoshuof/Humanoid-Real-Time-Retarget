@@ -6,26 +6,20 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 from isaacgym import gymtorch,gymapi
-from abc import ABC, abstractmethod
 import threading
 import pandas as pd
 from collections import OrderedDict
-import numpy as np
 import time
 import pickle
 import cv2
 
 from sim.env import Env
-import torch
 
-
-from retarget.robot_kinematics_model import RobotZeroPose
+from robot_kinematics_model import RobotZeroPose
 
 from retarget.utils import get_mocap_translation
 from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch, to_numpy
-
-from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
 
 from retarget.retarget_solver import HuUpperBodyFromMocapRetarget
 from mocap_communication.receive import MocapReceiver
@@ -38,7 +32,6 @@ class MocapControlEnv(Env):
     def _set_humanoid_dof_tar_pos(self, env_idx, dof_pos):
         env_handle = self.env_handles[env_idx]
         actor_handle = self.robot_handles[env_idx]
-
         # self.gym.set_actor_dof_state(self.sim, actor_handle, to_torch(dof_pos))
         self.gym.set_dof_position_target_tensor(self.sim,gymtorch.unwrap_tensor(dof_pos) )
     def _get_viewer_img(self,env_dix):
@@ -78,10 +71,11 @@ class DataRecorder:
         self.save_dir = save_dir
 
     def record(self,body_pose,dof_pos,dof_state,img):
+        map_indices = [14,15,16,17,18, 23,24,25,26,27]
         if body_pose is not None:
             self.body_pose.append(to_numpy(body_pose))
-        self.dof_pos.append(to_numpy(dof_pos).astype(np.float32))
-        self.dof_state.append(self.process_dof_state(dof_state))
+        self.dof_pos.append(to_numpy(dof_pos).astype(np.float32)[map_indices])
+        self.dof_state.append(self.process_dof_state(dof_state)[map_indices])
         self.img.append(self.process_img(img))
 
     def process_img(self,img):
@@ -94,14 +88,6 @@ class DataRecorder:
         return dof_state.astype(np.float32)
 
     def save(self):
-        # with open(f'{self.save_dir}/body_pose.pkl','wb') as f:
-        #     pickle.dump(np.stack(self.body_pose),f)
-        # with open(f'{self.save_dir}/dof_pos.pkl','wb') as f:
-        #     pickle.dump(np.stack(self.dof_pos),f)
-        # with open(f'{self.save_dir}/dof_state.pkl','wb') as f:
-        #     pickle.dump(np.stack(self.dof_state),f)
-        # with open(f'{self.save_dir}/img.pkl','wb') as f:
-        #     pickle.dump(np.stack(self.img),f)
         data_dict = OrderedDict(
             body_pose=np.stack(self.body_pose),
             dof_pos=np.stack(self.dof_pos),
@@ -114,9 +100,7 @@ class DataRecorder:
         with open(f'{self.save_dir}/{save_time}.pkl','wb') as f:
             pickle.dump(data_dict,f)
 
-
-
-
+        print('save data successfully')
 
 
 
