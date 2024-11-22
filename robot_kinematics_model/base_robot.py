@@ -6,10 +6,14 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 import copy
+from typing import Dict,Union,OrderedDict
+from collections import OrderedDict
+import torch
 
 from retarget.utils import parse_urdf
 from poselib.poselib.skeleton.skeleton3d import SkeletonState
 
+from robot_kinematics_model.base_forward_model import cal_forward_kinematics
 
 class BaseRobot:
     def __init__(self):
@@ -31,6 +35,10 @@ class RobotZeroPose:
         self._parent_indices = parent_indices
         self._num_joints = num_joints
         self._node_names = node_names
+
+        self._global_rotation = torch.tensor([[0,0,0,1.]]*(self.num_joints),dtype=torch.float32)
+        self._local_rotation = torch.tensor([[0,0,0,1.]]*(self.num_joints),dtype=torch.float32)
+
         self._skeleton_tree = skeleton_tree
     @property
     def local_translation(self):
@@ -38,6 +46,12 @@ class RobotZeroPose:
     @property
     def global_translation(self):
         return self._global_translation.clone()
+    @property
+    def global_rotation(self):
+        return self._global_rotation.clone()
+    @property
+    def local_rotation(self):
+        return self._local_rotation.clone()
     @property
     def parent_indices(self):
         return self._parent_indices.clone()
@@ -71,7 +85,27 @@ class RobotZeroPose:
             node_names=skeleton_state.skeleton_tree.node_names,
             skeleton_tree=skeleton_state.skeleton_tree
         )
-
-
-
-
+    @classmethod
+    def from_dict(cls, robot_dict:Union[Dict,OrderedDict],is_local=False):
+        if is_local:
+            robot_dict['global_translation'] = cls.cal_global_translation(robot_dict['local_translation'],robot_dict['parent_indices'])
+        else:
+            robot_dict['local_translation'] = cls.cal_local_translation(robot_dict['global_translation'],robot_dict['parent_indices'])
+        return cls(**robot_dict)
+    @staticmethod
+    def cal_local_translation(global_translation, parent_indices):
+        local_translation = global_translation.clone()
+        local_translation[1:] -= global_translation[parent_indices[1:]]
+        return local_translation
+    @staticmethod
+    def cal_global_translation(local_translation, parent_indices):
+        raise NotImplementedError
+    def rebuild_pose_by_local_rotation(self,local_rotation):
+        global_rotation, self._global_translation = cal_forward_kinematics(
+            motion_local_rotation=local_rotation,
+            motion_root_translation=self.global_translation[0],
+            parent_indices=self.parent_indices,
+            zero_pose_local_translation=self.local_translation
+        )
+        self._local_translation = self.cal_local_translation(self.global_translation,self.parent_indices)
+        return global_rotation

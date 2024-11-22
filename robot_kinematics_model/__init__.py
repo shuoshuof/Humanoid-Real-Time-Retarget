@@ -6,5 +6,6 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 from robot_kinematics_model.base_robot import RobotZeroPose
+from robot_kinematics_model.base_forward_model import cal_forward_kinematics
 
-__all__ = ['RobotZeroPose']
+__all__ = ['RobotZeroPose', 'cal_forward_kinematics']
