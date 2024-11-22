@@ -14,7 +14,7 @@ import time
 
 from vedo import *
 
-from vedo_visualizer import BaseSkeletonRobot
+from vedo_visualizer import BaseRobot
 
 settings.default_backend = "vtk"
 settings.immediate_rendering = False
@@ -67,7 +67,7 @@ class BaseVedoVisualizer(ABC):
         self.plotter.interactive()
 
 class RobotVisualizer(BaseVedoVisualizer):
-    def __init__(self,num_subplots,robots:List[Union[BaseSkeletonRobot]],data:List,**kwargs):
+    def __init__(self, num_subplots, robots:List[Union[BaseRobot]], data:List, **kwargs):
         self.robots = robots
         self.num_robot = len(robots)
         super().__init__(num_subplots, **kwargs)
@@ -92,19 +92,19 @@ class RobotVisualizer(BaseVedoVisualizer):
         self.counter +=1
         self.update_robots()
         self.update_plt()
-        print(f'fps: {round((1/(time.time()-start)),2)}')
+        # print(f'fps: {round((1/(time.time()-start)),2)}')
 
 class SkeletonRobotVisualizer(RobotVisualizer):
-    def __init__(self,num_subplots,robots:List[Union[BaseSkeletonRobot]],data:List,**kwargs):
+    def __init__(self, num_subplots, robots:List[Union[BaseRobot]], data:List, **kwargs):
         super().__init__(num_subplots, robots, data, **kwargs)
 
     def update_plt(self):
         for i in range(self.num_subplots):
             self.plotter.at(i).remove('Spheres')
             self.plotter.at(i).remove('Lines')
+            self.plotter.at(i).remove('Arrows')
             self.plotter.at(i).add(*self.robots[i].geoms)
             self.plotter.at(i).render()
-            print(self.robots[i].geoms)
 
     def update_robots(self):
         for i in range(self.num_subplots):

@@ -14,3 +14,7 @@ class SkeletonLines(Lines):
 class SkeletonJoints(Spheres):
     def __init__(self,pos,r=0.02):
         super().__init__(pos,r=r)
+
+class JointAxes(Arrows):
+    def __init__(self,start,end,color):
+        super().__init__(start,end,c=color)
