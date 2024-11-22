@@ -73,13 +73,14 @@ class BaseSkeletonRobot(BaseRobot):
             axes = quat_rotate(to_torch(body_quat).unsqueeze(1),axes)
             # rgb
             color = torch.eye(3).unsqueeze(0).expand(len(body_pos),-1,-1)
+
             arrow_start = np.repeat(body_pos[:,np.newaxis],3, axis=1)
             arrow_end = body_pos[:,np.newaxis] + to_numpy(axes)
             self._geoms.append(JointAxes(arrow_start.reshape(-1,3), arrow_end.reshape(-1,3), color=to_numpy(color).reshape(-1,3)))
 
-
         self._geoms.append(SkeletonLines(start, end))
         self._geoms.append(SkeletonJoints(body_pos))
+
     def forward(self, body_pos):
         self._generate_geoms(body_pos)
 

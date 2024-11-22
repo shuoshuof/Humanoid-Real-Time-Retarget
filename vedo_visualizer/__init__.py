@@ -6,7 +6,7 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 
-from .vedo_skeleton_robot import BaseRobot, BaseSkeletonRobot
-from .base_visualizer import SkeletonRobotVisualizer
+from vedo_visualizer.vedo_skeleton_robot import BaseRobot, BaseSkeletonRobot
+from vedo_visualizer.base_visualizer import SkeletonRobotVisualizer
 
 __all__ = ['BaseRobot', 'SkeletonRobotVisualizer', 'BaseSkeletonRobot']

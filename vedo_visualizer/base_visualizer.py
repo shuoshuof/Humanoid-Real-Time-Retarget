@@ -89,15 +89,18 @@ class RobotVisualizer(BaseVedoVisualizer):
         raise NotImplementedError
     def loop(self, event):
         start = time.time()
-        self.counter +=1
         self.update_robots()
         self.update_plt()
+        self.counter +=1
         # print(f'fps: {round((1/(time.time()-start)),2)}')
 
 class SkeletonRobotVisualizer(RobotVisualizer):
     def __init__(self, num_subplots, robots:List[Union[BaseRobot]], data:List, **kwargs):
         super().__init__(num_subplots, robots, data, **kwargs)
-
+        self._add_axes()
+    def _add_axes(self):
+        for i in range(self.num_subplots):
+            self.plotter.at(i).add(Axes(xrange=[-5, 5], yrange=[-5, 5], zrange=[-1, 1]))
     def update_plt(self):
         for i in range(self.num_subplots):
             self.plotter.at(i).remove('Spheres')
