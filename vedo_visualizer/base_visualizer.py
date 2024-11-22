@@ -63,7 +63,7 @@ class BaseVedoVisualizer(ABC):
         self.counter += 1
 
     def show(self):
-        self.plotter.timer_callback("start")
+        # self.plotter.timer_callback("start")
         self.plotter.interactive()
 
 class RobotVisualizer(BaseVedoVisualizer):
@@ -77,11 +77,13 @@ class RobotVisualizer(BaseVedoVisualizer):
     def _add_objects(self):
         for i in range(self.num_subplots):
             self.plotter.at(i).add(*self.robots[i].geoms)
+            # self.plotter.at(i).show(axes=0, resetcam=False)
+            self.plotter.at(i).render()
     def update_plt(self):
         for i in range(self.num_subplots):
-            self.plotter.at(i).clear()
             self.plotter.at(i).add(*self.robots[i].geoms)
-        self.plotter.render()
+            self.plotter.at(i).render()
+            print(self.robots[i].geoms)
     @abstractmethod
     def update_robots(self):
         raise NotImplementedError
@@ -95,6 +97,14 @@ class RobotVisualizer(BaseVedoVisualizer):
 class SkeletonRobotVisualizer(RobotVisualizer):
     def __init__(self,num_subplots,robots:List[Union[BaseSkeletonRobot]],data:List,**kwargs):
         super().__init__(num_subplots, robots, data, **kwargs)
+
+    def update_plt(self):
+        for i in range(self.num_subplots):
+            self.plotter.at(i).remove('Spheres')
+            self.plotter.at(i).remove('Lines')
+            self.plotter.at(i).add(*self.robots[i].geoms)
+            self.plotter.at(i).render()
+            print(self.robots[i].geoms)
 
     def update_robots(self):
         for i in range(self.num_subplots):
