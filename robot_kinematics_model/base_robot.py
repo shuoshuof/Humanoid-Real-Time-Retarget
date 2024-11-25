@@ -13,7 +13,8 @@ import torch
 from retarget.utils import parse_urdf
 from poselib.poselib.skeleton.skeleton3d import SkeletonState
 
-from robot_kinematics_model.base_forward_model import cal_forward_kinematics
+from robot_kinematics_model import cal_forward_kinematics
+
 
 class BaseRobot:
     def __init__(self):
