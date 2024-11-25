@@ -160,7 +160,7 @@ class Env:
         cube_asset = self.gym.create_box(self.sim, 0.07, 0.07, 0.07, cube_asset_options)
 
         pose = gymapi.Transform()
-        pose.p = gymapi.Vec3(-0.2, random.uniform(-0.1,0.05), 1.3)
+        pose.p = gymapi.Vec3(-0.2, random.uniform(-0.15,0.05), 1.3)
         # pose.p = gymapi.Vec3(-0.2, -0.2, 1.3)
         pose.r = gymapi.Quat(0, 0, 0, 1)
         cube_handle = self.gym.create_actor(env, cube_asset, pose, 'cube', env_idx,-1)

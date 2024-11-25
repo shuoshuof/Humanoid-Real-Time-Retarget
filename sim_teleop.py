@@ -5,15 +5,12 @@
 @File ：sim_teleop.py
 @Project ：Humanoid-Real-Time-Retarget
 """
-from isaacgym import gymtorch,gymapi
 import threading
 import pandas as pd
 from collections import OrderedDict
 import time
 import pickle
 import cv2
-
-from sim.env import Env
 
 from robot_kinematics_model import RobotZeroPose
 
@@ -23,44 +20,8 @@ from retarget.torch_ext import to_torch, to_numpy
 
 from retarget.retarget_solver import HuUpperBodyFromMocapRetarget
 from mocap_communication.receive import MocapReceiver
+from sim.mocap_env import MocapControlEnv
 
-
-class MocapControlEnv(Env):
-    def __init__(self, print_freq=False):
-        super().__init__(print_freq)
-
-    def _set_humanoid_dof_tar_pos(self, env_idx, dof_pos):
-        env_handle = self.env_handles[env_idx]
-        actor_handle = self.robot_handles[env_idx]
-        # self.gym.set_actor_dof_state(self.sim, actor_handle, to_torch(dof_pos))
-        self.gym.set_dof_position_target_tensor(self.sim,gymtorch.unwrap_tensor(dof_pos) )
-    def _get_viewer_img(self,env_dix):
-        env_handle = self.env_handles[env_dix]
-        cam_handle = self.center_cam_handles[env_dix]
-        img = self.gym.get_camera_image(self.sim,env_handle, cam_handle, gymapi.IMAGE_COLOR)
-        return img.reshape(img.shape[0],-1,4)[...,:3]
-
-    def _get_dof_states(self,env_idx):
-        env_handle = self.env_handles[env_idx]
-        actor_handle = self.robot_handles[env_idx]
-        dof_state = self.gym.get_actor_dof_states(env_handle,actor_handle,gymapi.STATE_POS)
-        return dof_state
-
-    def step(self, dof_tar_pos):
-        self._set_humanoid_dof_tar_pos(0, dof_tar_pos)
-
-        self.gym.simulate(self.sim)
-        self.gym.fetch_results(self.sim, True)
-        self.gym.step_graphics(self.sim)
-        self.gym.render_all_camera_sensors(self.sim)
-        self.gym.refresh_actor_root_state_tensor(self.sim)
-
-        viewer_img = self._get_viewer_img(0)
-        dof_state = self._get_dof_states(0)
-        # print(dof_state)
-        self.gym.draw_viewer(self.viewer, self.sim, True)
-        self.gym.sync_frame_time(self.sim)
-        return dof_state, viewer_img
 
 class DataRecorder:
     def __init__(self,save_dir):
@@ -71,7 +32,8 @@ class DataRecorder:
         self.save_dir = save_dir
 
     def record(self,body_pose,dof_pos,dof_state,img):
-        map_indices = [14,15,16,17,18, 23,24,25,26,27]
+        # map_indices = [14,15,16,17,18, 23,24,25,26,27]
+        map_indices = np.arange(len(dof_pos))
         if body_pose is not None:
             self.body_pose.append(to_numpy(body_pose))
         self.dof_pos.append(to_numpy(dof_pos).astype(np.float32)[map_indices])
