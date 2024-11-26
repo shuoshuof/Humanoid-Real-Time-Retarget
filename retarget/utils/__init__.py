@@ -6,7 +6,7 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 
-from retarget.utils.parse_mocap import get_mocap_translation
+from retarget.utils.parse_mocap import get_mocap_translation, get_mocap_rotation
 from retarget.utils.parse_urdf import parse_urdf
 
-__all__ = ['parse_urdf', 'get_mocap_translation']
+__all__ = ['parse_urdf', 'get_mocap_translation', 'get_mocap_rotation']

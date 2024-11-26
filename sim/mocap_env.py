@@ -31,8 +31,9 @@ class MocapControlEnv(Env):
         dof_state = self.gym.get_actor_dof_states(env_handle,actor_handle,gymapi.STATE_POS)
         return dof_state
 
-    def step(self, dof_tar_pos):
-        self._set_humanoid_dof_tar_pos(0, dof_tar_pos)
+    def step(self, dof_tar_pos=None):
+        if dof_tar_pos is not None:
+            self._set_humanoid_dof_tar_pos(0, dof_tar_pos)
 
         self.gym.simulate(self.sim)
         self.gym.fetch_results(self.sim, True)

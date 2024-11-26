@@ -7,5 +7,6 @@
 """
 from robot_kinematics_model.base_robot import RobotZeroPose
 from robot_kinematics_model.kinematics import cal_forward_kinematics
+from robot_kinematics_model.kinematics import cal_forward_kinematics, cal_local_rotation
 
-__all__ = ['RobotZeroPose']
+__all__ = ['RobotZeroPose', 'cal_forward_kinematics', 'cal_local_rotation']

@@ -59,5 +59,5 @@ if __name__ == '__main__':
         received_dict = receiver.receive()
         if received_dict is not None:
             # print(received_dict)
-            print("Received:", received_dict['img'].shape)
+            print("Received:", received_dict['dof_pos'].shape)
             time.sleep(0.001)
