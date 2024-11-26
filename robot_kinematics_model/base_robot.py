@@ -10,8 +10,8 @@ from typing import Dict,Union,OrderedDict
 from collections import OrderedDict
 import torch
 
-from retarget.utils import parse_urdf
-from poselib.poselib.skeleton.skeleton3d import SkeletonState
+from retarget.utils.parse_urdf import parse_urdf
+from poselib.poselib.skeleton.skeleton3d import SkeletonState,SkeletonTree
 
 from robot_kinematics_model.kinematics import cal_forward_kinematics
 
@@ -29,7 +29,7 @@ class RobotZeroPose:
             parent_indices,
             num_joints,
             node_names,
-            skeleton_tree
+            skeleton_tree:SkeletonTree
     ):
         self._local_translation = local_translation
         self._global_translation = global_translation
@@ -109,4 +109,10 @@ class RobotZeroPose:
             zero_pose_local_translation=self.local_translation
         )
         self._local_translation = self.cal_local_translation(self.global_translation,self.parent_indices)
+        self._skeleton_tree._local_translation = self.local_translation
         return global_rotation
+
+    def get_sk_zero_pose(self):
+        return SkeletonState.zero_pose(self.skeleton_tree)
+
+

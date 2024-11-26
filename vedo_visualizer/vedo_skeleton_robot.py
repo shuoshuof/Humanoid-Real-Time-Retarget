@@ -15,10 +15,9 @@ import torch
 
 
 from poselib.poselib.core.rotation3d import *
-
-from robot_kinematics_model import RobotZeroPose
 from vedo_visualizer.vedo_geoms import *
 from retarget.torch_ext import *
+from robot_kinematics_model.base_robot import RobotZeroPose
 
 class BaseRobot(ABC):
     def __init__(self):

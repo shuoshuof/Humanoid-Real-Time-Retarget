@@ -2,7 +2,7 @@
 """
 @Time ： 2024/11/22 16:23
 @Auth ： shuoshuof
-@File ：retargeter.py
+@File ：body_retargeter.py
 @Project ：Humanoid-Real-Time-Retarget
 """
 
@@ -18,10 +18,8 @@ import torch
 
 from robot_kinematics_model import RobotZeroPose, cal_local_rotation, cal_forward_kinematics
 
-from retarget.utils import get_mocap_translation, get_mocap_rotation
 from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch, to_numpy
-from retarget.retarget_solver.zero_pose_transform import zero_pose_transform_quat
 from retarget.retarget_solver.base_retargeter import BaseHumanoidRetargeter
 
 from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
@@ -49,20 +47,25 @@ class Mocap2HuBodyRetargeter(BaseHumanoidRetargeter):
         left_elbow_quat = source_local_rotation[19]
         # left_elbow_pitch, left_elbow_roll, left_elbow_yaw = quat_in_xyz_axis(left_elbow_quat, 'ZYX')
         left_elbow_yaw,left_elbow_pitch, left_elbow_roll = quat_in_xyz_axis(left_elbow_quat,'ZYX')
+        # left_elbow_pitch, left_elbow_yaw, left_elbow_roll = quat_in_xyz_axis(left_elbow_quat,'YZX')
+        # left_elbow_yaw, left_elbow_roll,left_elbow_pitch = quat_in_xyz_axis(left_elbow_quat,'ZXY')
 
         right_elbow_quat = source_local_rotation[15]
         # right_elbow_pitch, right_elbow_roll, right_elbow_yaw = quat_in_xyz_axis(right_elbow_quat, 'ZYX')
         right_elbow_yaw,right_elbow_pitch, right_elbow_roll = quat_in_xyz_axis(right_elbow_quat,'ZYX')
+        # right_elbow_pitch,right_elbow_yaw, right_elbow_roll = quat_in_xyz_axis(right_elbow_quat,'YZX')
+        # right_elbow_yaw, right_elbow_roll, right_elbow_pitch = quat_in_xyz_axis(right_elbow_quat,'ZXY')
 
         robot_local_rotation[12] = left_shoulder_pitch
         robot_local_rotation[13] = left_shoulder_roll
-        robot_local_rotation[14] = quat_mul_norm(left_shoulder_yaw,left_elbow_yaw)
-        # robot_local_rotation[14] = quat_mul_norm(left_elbow_yaw,left_shoulder_yaw)
+        # robot_local_rotation[14] = quat_mul_norm(left_shoulder_yaw,left_elbow_yaw)
+        robot_local_rotation[14] = quat_mul_norm(left_elbow_yaw,left_shoulder_yaw)
 
         robot_local_rotation[21] = right_shoulder_pitch
         robot_local_rotation[22] = right_shoulder_roll
-        robot_local_rotation[23] = quat_mul_norm(right_shoulder_yaw,right_elbow_yaw)
-        # robot_local_rotation[23] = quat_mul_norm(right_elbow_yaw,right_shoulder_yaw)
+        # robot_local_rotation[23] = quat_mul_norm(right_shoulder_yaw,right_elbow_yaw)
+        robot_local_rotation[23] = quat_mul_norm(right_elbow_yaw,right_shoulder_yaw)
+
 
         robot_local_rotation[15] = left_elbow_pitch
         robot_local_rotation[16] = left_elbow_roll
@@ -97,10 +100,13 @@ class Mocap2HuBodyRetargeter(BaseHumanoidRetargeter):
 
 
 if __name__ == '__main__':
+    from retarget.utils.parse_mocap import get_vtrdyn_translation,get_vtrdyn_rotation
+    from retarget.utils.parse_mocap import vtrdyn_zero_pose_transform
+
     df = pd.read_csv('test_motion/mocap_raw/walk_with_hand.csv')
-    motion_global_translation = to_torch(get_mocap_translation(df))
-    motion_global_rotation = to_torch(get_mocap_rotation(df))
-    motion_global_rotation = zero_pose_transform_quat(global_rotation=motion_global_rotation)
+    motion_global_translation = to_torch(get_vtrdyn_translation(df))
+    motion_global_rotation = to_torch(get_vtrdyn_rotation(df))
+    motion_global_rotation = vtrdyn_zero_pose_transform(global_rotation=motion_global_rotation)
 
     with open('asset/zero_pose/vtrdyn_zero_pose.pkl', 'rb') as f:
         vtrdyn_zero_pose = pickle.load(f)

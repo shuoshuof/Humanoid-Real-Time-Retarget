@@ -18,7 +18,6 @@ from poselib.poselib.visualization.common import plot_skeleton_H
 from robot_kinematics_model import RobotZeroPose
 
 from retarget.retarget_solver.base_retargeter import BaseHumanoidRetargeter
-from retarget.utils import get_mocap_translation
 from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch
 
@@ -173,7 +172,7 @@ def cal_shoulderPR(v1, v0, parent_global_rotation):
 
 if __name__ == '__main__':
     df = pd.read_csv('test_motion/mocap_raw/walk_with_hand.csv')
-    motion_global_translation = get_mocap_translation(df)
+    motion_global_translation = get_vtrdyn_translation(df)
     motion_global_translation = to_torch(motion_global_translation)
 
     with open('asset/zero_pose/vtrdyn_zero_pose.pkl', 'rb') as f:

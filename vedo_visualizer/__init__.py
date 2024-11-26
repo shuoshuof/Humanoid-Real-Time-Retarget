@@ -8,5 +8,6 @@
 
 from vedo_visualizer.vedo_skeleton_robot import BaseRobot, BaseSkeletonRobot
 from vedo_visualizer.base_visualizer import SkeletonRobotVisualizer
+from vedo_visualizer.common import vis_zero_pose,vis_robot
 
-__all__ = ['BaseRobot', 'SkeletonRobotVisualizer', 'BaseSkeletonRobot']
+__all__ = ['BaseRobot', 'SkeletonRobotVisualizer', 'BaseSkeletonRobot','vis_zero_pose','vis_robot']

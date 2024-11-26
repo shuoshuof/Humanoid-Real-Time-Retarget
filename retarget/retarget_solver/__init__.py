@@ -7,7 +7,7 @@
 """
 
 from retarget.retarget_solver.retarget_solver import HuUpperBodyFromMocapRetarget
-from retarget.retarget_solver.retargeter import Mocap2HuBodyRetargeter
+from retarget.retarget_solver.body_retargeter import Mocap2HuBodyRetargeter
 
 __all__ = ['HuUpperBodyFromMocapRetarget','Mocap2HuBodyRetargeter']
 

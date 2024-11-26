@@ -11,7 +11,7 @@ import pickle
 
 import torch
 
-from robot_kinematics_model.base_robot import RobotZeroPose
+from robot_kinematics_model import RobotZeroPose
 from vedo_visualizer import SkeletonRobotVisualizer,BaseRobot,BaseSkeletonRobot
 
 def vis_robot(motions:List,zero_pose):
@@ -31,15 +31,15 @@ def vis_zero_pose(zero_poses:List[RobotZeroPose]):
 if __name__ == "__main__":
     from poselib.poselib.core.rotation3d import *
     from retarget.spatial_transform.transform3d import *
-    from retarget.utils import get_mocap_rotation,get_mocap_translation
+    from retarget.utils import get_vtrdyn_rotation,get_vtrdyn_translation
     from retarget.torch_ext import *
     import pandas as pd
     import numpy as np
 
     df = pd.read_csv('test_motion/mocap_raw/walk_with_hand.csv')
 
-    motion_global_translation = get_mocap_translation(df)
-    motion_global_rotation = get_mocap_rotation(df)
+    motion_global_translation = get_vtrdyn_translation(df)
+    motion_global_rotation = get_vtrdyn_rotation(df)
     motion_global_translation = motion_global_translation-motion_global_translation[0,0]
 
     rotation = quat_from_angle_axis(torch.tensor(torch.pi/2),torch.tensor([0.,0.,1]))
@@ -58,7 +58,5 @@ if __name__ == "__main__":
     #     vtrdyn_t_pose = pickle.load(f)
     # zero_pose = RobotZeroPose.from_skeleton_state(vtrdyn_t_pose)
     # vis_zero_pose([zero_pose])
-
-
 
 
