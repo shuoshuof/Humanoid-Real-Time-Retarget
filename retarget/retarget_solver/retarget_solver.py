@@ -171,6 +171,7 @@ def cal_shoulderPR(v1, v0, parent_global_rotation):
 
 
 if __name__ == '__main__':
+    from retarget.utils.parse_mocap import get_vtrdyn_translation
     df = pd.read_csv('test_motion/mocap_raw/walk_with_hand.csv')
     motion_global_translation = get_vtrdyn_translation(df)
     motion_global_translation = to_torch(motion_global_translation)
