@@ -112,7 +112,7 @@ class SkeletonRobotVisualizer(RobotVisualizer):
     def update_robots(self):
         for i in range(self.num_subplots):
             if self.counter>=len(self.data[i]):
-                continue
+                self.counter = 0
             self.robots[i].forward(self.data[i][self.counter])
 
 if __name__ == '__main__':
