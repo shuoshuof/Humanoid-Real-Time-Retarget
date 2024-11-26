@@ -11,16 +11,16 @@ from collections import OrderedDict
 import time
 import pickle
 import cv2
+from sim.mocap_env import MocapControlEnv
+from robot_kinematics_model.base_robot import RobotZeroPose
 
-from robot_kinematics_model import RobotZeroPose
-
-from retarget.utils import get_mocap_translation
+from retarget.utils.parse_mocap import get_vtrdyn_translation
 from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch, to_numpy
 
 from retarget.retarget_solver import HuUpperBodyFromMocapRetarget
 from mocap_communication.receive import MocapReceiver
-from sim.mocap_env import MocapControlEnv
+
 
 
 class DataRecorder:
@@ -69,7 +69,7 @@ class DataRecorder:
 if __name__ == '__main__':
 
     df = pd.read_csv('test_motion/mocap_raw/walk_with_hand.csv')
-    motion_global_translation = get_mocap_translation(df)
+    motion_global_translation = get_vtrdyn_translation(df)
     motion_global_translation = to_torch(motion_global_translation)
 
     with open('asset/zero_pose/vtrdyn_zero_pose.pkl', 'rb') as f:
