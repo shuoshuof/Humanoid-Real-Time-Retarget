@@ -6,8 +6,9 @@
 @Project ：Humanoid-Real-Time-Retarget
 """
 
-from retarget.retarget_solver.retarget_solver import BaseHumanoidRetarget,HuUpperBodyFromMocapRetarget
+from retarget.retarget_solver.retarget_solver import HuUpperBodyFromMocapRetarget
+from retarget.retarget_solver.retargeter import Mocap2HuBodyRetargeter
 
-__all__ = ['BaseHumanoidRetarget', 'HuUpperBodyFromMocapRetarget']
+__all__ = ['HuUpperBodyFromMocapRetarget','Mocap2HuBodyRetargeter']
 
 

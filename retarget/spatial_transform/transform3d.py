@@ -52,11 +52,11 @@ def cal_joint_quat(zero_pose_local_translation, motion_local_translation):
 def quat_in_xyz_axis(q,seq:str='xyz'):
     r = sRot.from_quat(q)
     euler_angles = r.as_euler(seq, degrees=False)
-    quat_x = sRot.from_euler('x', euler_angles[...,0], degrees=False).as_quat()
-    quat_y = sRot.from_euler('y', euler_angles[...,1], degrees=False).as_quat()
-    quat_z = sRot.from_euler('z', euler_angles[...,2], degrees=False).as_quat()
+    quat_1 = sRot.from_euler(seq[0], euler_angles[...,0], degrees=False).as_quat()
+    quat_2 = sRot.from_euler(seq[1], euler_angles[...,1], degrees=False).as_quat()
+    quat_3 = sRot.from_euler(seq[2], euler_angles[...,2], degrees=False).as_quat()
 
-    return torch.Tensor(quat_x), torch.Tensor(quat_y), torch.Tensor(quat_z)
+    return torch.Tensor(quat_1), torch.Tensor(quat_2), torch.Tensor(quat_3)
 
 @torch.jit.script
 def proj_in_plane(v, n):
