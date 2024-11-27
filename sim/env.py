@@ -107,6 +107,8 @@ class Env:
         asset_options.fix_base_link = True
         asset_options.default_dof_drive_mode = gymapi.DOF_MODE_POS
         asset_options.mesh_normal_mode = gymapi.COMPUTE_PER_VERTEX
+        asset_options.thickness = 0.001
+        asset_options.disable_gravity = True
         asset_options.vhacd_enabled = True
 
         asset = self.gym.load_asset(self.sim, asset_root, asset_path, asset_options)
@@ -157,6 +159,7 @@ class Env:
     def _add_object(self, env, env_idx):
         cube_asset_options = gymapi.AssetOptions()
         cube_asset_options.density = 10
+        cube_asset_options.thickness = 0.001
         cube_asset = self.gym.create_box(self.sim, 0.07, 0.07, 0.07, cube_asset_options)
 
         pose = gymapi.Transform()
@@ -169,12 +172,13 @@ class Env:
         return cube_handle
     def _add_target(self,env,env_idx):
         target_asset_options = gymapi.AssetOptions()
-        target_asset_options.density = 10000000
+        target_asset_options.density = 1
+        target_asset_options.disable_gravity = True
         target_asset = self.gym.create_box(self.sim, 0.15, 0.15, 0.00001, target_asset_options)
         pose = gymapi.Transform()
-        pose.p = gymapi.Vec3(0, 0, 1.1)
+        pose.p = gymapi.Vec3(0, 0, 1.125001)
         pose.r = gymapi.Quat(0, 0, 0, 1)
-        target_handle = self.gym.create_actor(env, target_asset, pose, 'target', env_idx)
+        target_handle = self.gym.create_actor(env, target_asset, pose, 'target', env_idx+1,0)
         color = gymapi.Vec3(0., 1, 0.)
         self.gym.set_rigid_body_color(env, target_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
         return target_handle
