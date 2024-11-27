@@ -137,6 +137,7 @@ VTRDYN_JOINT_NAMES = [
 #
 # ]
 
+# receive order
 BodyNodes = [
     'Hips',
     'RightUpperLeg',

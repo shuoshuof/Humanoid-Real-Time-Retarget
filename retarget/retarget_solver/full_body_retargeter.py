@@ -12,7 +12,7 @@ from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
 from robot_kinematics_model import RobotZeroPose, cal_local_rotation
 
 
-class FullBodyRetargeter(BaseHumanoidRetargeter):
+class VtrdynFullBodyRetargeter(BaseHumanoidRetargeter):
     def __init__(self, mocap_zero_pose: RobotZeroPose, target_zero_pose: RobotZeroPose):
         super().__init__(mocap_zero_pose, target_zero_pose)
 
@@ -28,19 +28,34 @@ class FullBodyRetargeter(BaseHumanoidRetargeter):
         robot_local_rotation = quat_identity_like(self.target_zero_pose.local_rotation)
 
         robot_local_rotation = self._retarget_arm_from_global_translation(
-            body_global_rotation, body_global_translation,robot_local_rotation)
+            robot_local_rotation,
+            body_global_rotation,
+            body_global_translation
+        )
 
         robot_local_rotation = self._retarget_wrist_from_global_rotation(robot_local_rotation, body_global_rotation)
 
         dof_pos = quat_to_dof_pos(robot_local_rotation[1:], Hu_DOF_AXIS)
+
+        dof_pos = self._retarget_gripper(
+            dof_pos,
+            body_global_rotation,
+            left_hand_global_translation,
+            right_hand_global_translation
+        )
 
         self._motion_local_rotation.append(robot_local_rotation)
         self._motion_dof_pos.append(dof_pos)
 
         return robot_local_rotation, dof_pos
 
-    def _retarget_arm_from_global_translation(self, body_global_rotation, body_global_translation,
-                                              robot_local_rotation):
+    def _retarget_arm_from_global_translation(
+            self,
+            robot_local_rotation,
+            body_global_rotation,
+            body_global_translation
+
+    ):
         left_shoulder_parent_quat = body_global_rotation[17]
 
         left_shoulder_pitch, left_shoulder_roll = cal_shoulderPR(
@@ -86,9 +101,6 @@ class FullBodyRetargeter(BaseHumanoidRetargeter):
 
         return robot_local_rotation
 
-    def _retarget_arm_from_global_rotation(self, source_global_rotation, robot_local_rotation):
-        pass
-
     def _retarget_wrist_from_global_rotation(
             self,
             robot_local_rotation,
@@ -130,8 +142,42 @@ class FullBodyRetargeter(BaseHumanoidRetargeter):
 
         return robot_local_rotation
 
-    def _retarget_wrist_from_global_translation(self, source_global_translation):
-        pass
+    def _retarget_gripper(
+            self,
+            dof_pos,
+            body_global_rotation,
+            left_hand_global_translation,
+            right_hand_global_translation
+    ):
+        orig_hand_x_dist_to_wrist = self.source_zero_pose.local_translation[[18,22,26,30,33],0]-self.source_zero_pose.local_translation[24,0]
+
+        left_wrist_global_quat = body_global_rotation[20]
+        # transform to left wrist frame
+        left_hand_global_translation = quat_rotate(left_wrist_global_quat, left_hand_global_translation)
+        left_hand_x_dist_to_wrist = (left_hand_global_translation-left_hand_global_translation[0])[[3,7,11,15,19],0]
+
+        right_wrist_global_quat = body_global_rotation[16]
+        # transform to right wrist frame
+        right_hand_global_translation = quat_rotate(right_wrist_global_quat, right_hand_global_translation)
+        right_hand_x_dist_to_wrist = (right_hand_global_translation-right_hand_global_translation[0])[[3,7,11,15,19],0]
+
+        left_avg_dist = left_hand_x_dist_to_wrist.mean()
+        right_avg_dist = right_hand_x_dist_to_wrist.mean()
+
+        left_close = left_avg_dist/orig_hand_x_dist_to_wrist.mean() <0.7
+        right_close = right_avg_dist/orig_hand_x_dist_to_wrist.mean() <0.7
+
+
+        dof_pos[19 - 1] = 0 if left_close else 0.044
+        dof_pos[20 - 1] = 0 if left_close else -0.044
+
+        dof_pos[28-1] = 0 if right_close else 0.044
+        dof_pos[29-1] = 0 if right_close else -0.044
+
+        return dof_pos
+
+
+
 
 
 @torch.jit.script
@@ -217,27 +263,27 @@ if __name__ == '__main__':
     motion_global_rotation = vtrdyn_full_zero_pose_transform(global_rotation=motion_global_rotation)
 
     mocap_data = [{'body_pos': body_pos, 'body_quat': body_quat} for body_pos, body_quat in
-            zip(motion_global_translation, motion_global_rotation)]
+                  zip(motion_global_translation, motion_global_rotation)]
     # vis_robot([mocap_data],[vtrdyn_full_zero_pose])
 
     hu_zero_pose = RobotZeroPose.from_urdf('asset/hu/hu_v5.urdf')
-    vis_zero_pose([hu_zero_pose])
+    # vis_zero_pose([hu_zero_pose])
 
-    hu_retarget = FullBodyRetargeter(vtrdyn_full_zero_pose, hu_zero_pose)
+    hu_retarget = VtrdynFullBodyRetargeter(vtrdyn_full_zero_pose, hu_zero_pose)
 
     for i in range(1000):
         start = time.time()
         global_translation = motion_global_translation[i]
         body_global_translation = global_translation[
             [0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 34, 35, 36, 37, 38, 39, 11, 12, 13, 14]]
-        left_hand_global_translation = global_translation[14:14 + 19]
-        right_hand_global_translation = global_translation[39:39 + 19]
+        left_hand_global_translation = global_translation[14:14 + 20]
+        right_hand_global_translation = global_translation[39:39 + 20]
 
         global_rotation = motion_global_rotation[i]
         body_global_rotation = global_rotation[
             [0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 34, 35, 36, 37, 38, 39, 11, 12, 13, 14]]
-        left_hand_global_rotation = global_rotation[14:14 + 19]
-        right_hand_global_rotation = global_rotation[39:39 + 19]
+        left_hand_global_rotation = global_rotation[14:14 + 20]
+        right_hand_global_rotation = global_rotation[39:39 + 20]
 
         hu_retarget.retarget(
             body_global_rotation,
