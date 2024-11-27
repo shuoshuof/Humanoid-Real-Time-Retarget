@@ -31,18 +31,6 @@ class HuUpperBodyFromMocapRetarget(BaseHumanoidRetargeter):
         self._motion_dof_pos = []
         # self.filter = WeightedFilter(0.5)
 
-    @property
-    def motion_local_rotation(self):
-        return torch.stack(self._motion_local_rotation).clone()
-
-    @property
-    def motion_dof_pos(self):
-        return torch.stack(self._motion_dof_pos).clone()
-
-    @property
-    def motion_length(self):
-        return len(self._motion_local_rotation)
-
     def _cal_shoulderPR(self, v1, v0, parent_global_rotation):
         return cal_shoulderPR(v1, v0, parent_global_rotation)
 
