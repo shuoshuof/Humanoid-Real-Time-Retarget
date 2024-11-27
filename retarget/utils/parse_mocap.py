@@ -20,7 +20,7 @@ from poselib.poselib.skeleton.skeleton3d import SkeletonState, SkeletonMotion
 from retarget.torch_ext import *
 
 
-from vedo_visualizer import vis_robot, vis_zero_pose
+from vedo_visualizer import vis_robots, vis_zero_pose
 from robot_kinematics_model.base_robot import RobotZeroPose
 
 def get_vtrdyn_translation(data):

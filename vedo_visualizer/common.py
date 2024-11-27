@@ -14,10 +14,9 @@ import torch
 from robot_kinematics_model import RobotZeroPose
 from vedo_visualizer import SkeletonRobotVisualizer,BaseRobot,BaseSkeletonRobot
 
-def vis_robot(motions:List,zero_pose):
+def vis_robots(motions:List, zero_pose:List[RobotZeroPose]):
 
-    robot = BaseSkeletonRobot.from_zero_pose(zero_pose)
-    robots = [copy.deepcopy(robot) for _ in range(len(motions))]
+    robots = [BaseSkeletonRobot.from_zero_pose(zero_pose) for zero_pose in zero_pose]
 
     vis = SkeletonRobotVisualizer(len(motions),robots,motions)
     vis.show()
@@ -52,7 +51,7 @@ if __name__ == "__main__":
 
     data = [{'body_pos':body_pos,'body_quat':body_quat} for body_pos, body_quat in zip(motion_global_translation, motion_global_rotation)]
 
-    vis_robot([data,data],zero_pose=vtrdyn_zero_pose)
+    vis_robots([data, data], zero_pose=vtrdyn_zero_pose)
 
     # with open('asset/zero_pose/hu_zero_pose.pkl', 'rb') as f:
     #     vtrdyn_t_pose = pickle.load(f)

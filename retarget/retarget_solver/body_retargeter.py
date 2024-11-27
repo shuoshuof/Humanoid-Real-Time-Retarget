@@ -24,7 +24,7 @@ from retarget.retarget_solver.base_retargeter import BaseHumanoidRetargeter
 
 from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
 
-from vedo_visualizer.common import vis_robot
+from vedo_visualizer.common import vis_robots
 
 
 class Mocap2HuBodyRetargeter(BaseHumanoidRetargeter):
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     data = [{'body_pos': body_pos, 'body_quat': body_quat} for body_pos, body_quat in
             zip(to_numpy(hu_retarget.motion_global_translation), to_numpy(hu_retarget.motion_global_rotation))]
 
-    vis_robot([data], hu_zero_pose)
+    vis_robots([data], hu_zero_pose)
 
     # motion = SkeletonMotion.from_skeleton_state(state,fps=30)
     # plot_skeleton_H([motion])

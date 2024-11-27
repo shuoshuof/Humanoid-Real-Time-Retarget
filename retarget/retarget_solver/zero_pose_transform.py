@@ -50,7 +50,7 @@ if __name__ == '__main__':
     from retarget.torch_ext import *
     import pandas as pd
     import numpy as np
-    from vedo_visualizer.common import vis_robot
+    from vedo_visualizer.common import vis_robots
 
     df = pd.read_csv('test_motion/mocap_raw/walk_with_hand.csv')
 

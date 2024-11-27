@@ -200,7 +200,7 @@ if __name__ == '__main__':
     import pandas as pd
     import time
     from robot_kinematics_model import RobotZeroPose
-    from vedo_visualizer.common import vis_zero_pose, vis_robot
+    from vedo_visualizer.common import vis_zero_pose, vis_robots
 
     from retarget.torch_ext import to_torch
     from retarget.utils.parse_mocap import get_vtrdyn_full_translation, get_vtrdyn_full_rotation
@@ -254,4 +254,4 @@ if __name__ == '__main__':
     robot_data = [{'body_pos': body_pos, 'body_quat': body_quat} for body_pos, body_quat in
                   zip(hu_retarget.motion_global_translation, hu_retarget.motion_global_rotation)]
 
-    vis_robot([robot_data,mocap_data], [hu_zero_pose,vtrdyn_full_zero_pose])
+    vis_robots([robot_data, mocap_data], [hu_zero_pose, vtrdyn_full_zero_pose])
