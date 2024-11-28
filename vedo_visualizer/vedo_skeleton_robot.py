@@ -76,9 +76,9 @@ class BaseSkeletonRobot(BaseRobot):
             arrow_start = np.repeat(body_pos[:,np.newaxis],3, axis=1)
             arrow_end = body_pos[:,np.newaxis] + to_numpy(axes)
             self._geoms.append(JointAxes(arrow_start.reshape(-1,3), arrow_end.reshape(-1,3), color=to_numpy(color).reshape(-1,3)))
-
+        joint_colors = motion_data['color'] if motion_data.get('color',None) is not None else np.ones((len(body_pos),3))
         self._geoms.append(SkeletonLines(start, end))
-        self._geoms.append(SkeletonJoints(body_pos))
+        self._geoms.append(SkeletonJoints(body_pos,colors=joint_colors))
 
     def forward(self, body_pos):
         self._generate_geoms(body_pos)

@@ -12,8 +12,8 @@ class SkeletonLines(Lines):
         super().__init__(start,end,lw=3,c='blue')
 
 class SkeletonJoints(Spheres):
-    def __init__(self,pos,r=0.02):
-        super().__init__(pos,r=r)
+    def __init__(self,pos,r=0.02,colors=None):
+        super().__init__(pos,r=r,c=colors,alpha=0.5)
 
 class JointAxes(Arrows):
     def __init__(self,start,end,color):
