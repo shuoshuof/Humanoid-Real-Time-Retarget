@@ -23,22 +23,22 @@ VTRDYN_JOINT_NAMES = [
     'LeftLowerArm',
     'LeftHand',
     'LeftIndexFinger',
-    'LeftIndexFinger1',
+    'LeftIndexFinger1', #2
     'LeftIndexFinger2',
     'LeftIndexFinger3',
     'LeftMiddleFinger',
-    'LeftMiddleFinger1',
+    'LeftMiddleFinger1',#6
     'LeftMiddleFinger2',
     'LeftMiddleFinger3',
     'LeftPinkyFinger',
-    'LeftPinkyFinger1',
+    'LeftPinkyFinger1',#10
     'LeftPinkyFinger2',
     'LeftPinkyFinger3',
     'LeftRingFinger',
-    'LeftRingFinger1',
+    'LeftRingFinger1',#14
     'LeftRingFinger2',
     'LeftRingFinger3',
-    'LeftThumbFinger',
+    'LeftThumbFinger',#17
     'LeftThumbFinger1',
     'LeftThumbFinger2',
     'Neck',
@@ -134,9 +134,7 @@ VTRDYN_JOINT_NAMES = [
 #     'RightPinkyFinger1',
 #     'RightPinkyFinger2',
 #     'RightPinkyFinger3',
-#
 # ]
-
 # receive order
 BodyNodes = [
     'Hips',
