@@ -175,23 +175,23 @@ class VtrdynFullBodyPosRetargeter(BaseHumanoidRetargeter):
             left_hand_global_translation,
             right_hand_global_translation
     ):
-        orig_hand_x_dist_to_wrist = self.source_zero_pose.local_translation[[18,22,26,30,33],0]-self.source_zero_pose.local_translation[24,0]
+        orig_hand_x_dist_to_wrist = self.source_zero_pose.global_translation[[18,22,26,30,33],0]-self.source_zero_pose.global_translation[14,0]
 
         left_wrist_global_quat = body_global_rotation[14]
         # transform to left wrist frame
-        left_hand_global_translation = quat_rotate(left_wrist_global_quat, left_hand_global_translation)
-        left_hand_x_dist_to_wrist = (left_hand_global_translation-left_hand_global_translation[0])[[3,7,11,15,19],0]
+        left_hand_global_translation = quat_rotate(quat_inverse(left_wrist_global_quat), left_hand_global_translation)
+        left_hand_x_dist_to_wrist = (left_hand_global_translation-left_hand_global_translation[0])[[4,8,12,16,19],0]
 
         right_wrist_global_quat = body_global_rotation[39]
         # transform to right wrist frame
-        right_hand_global_translation = quat_rotate(right_wrist_global_quat, right_hand_global_translation)
-        right_hand_x_dist_to_wrist = (right_hand_global_translation-right_hand_global_translation[0])[[3,7,11,15,19],0]
+        right_hand_global_translation = quat_rotate(quat_inverse(right_wrist_global_quat), right_hand_global_translation)
+        right_hand_x_dist_to_wrist = (right_hand_global_translation-right_hand_global_translation[0])[[4,8,12,16,19],0]
 
         left_avg_dist = left_hand_x_dist_to_wrist.mean()
         right_avg_dist = right_hand_x_dist_to_wrist.mean()
 
-        left_close = left_avg_dist/orig_hand_x_dist_to_wrist.mean() <0.7
-        right_close = right_avg_dist/orig_hand_x_dist_to_wrist.mean() <0.7
+        left_close = left_avg_dist/orig_hand_x_dist_to_wrist.mean() < 0.7
+        right_close = right_avg_dist/orig_hand_x_dist_to_wrist.mean() < 0.7
 
 
         dof_pos[19 - 1] = 0 if left_close else 0.044
@@ -199,7 +199,7 @@ class VtrdynFullBodyPosRetargeter(BaseHumanoidRetargeter):
 
         dof_pos[28-1] = 0 if right_close else 0.044
         dof_pos[29-1] = 0 if right_close else -0.044
-
+        print(left_close,right_close)
         return dof_pos
 
 
@@ -323,7 +323,7 @@ if __name__ == '__main__':
             # right_hand_global_rotation,
             right_hand_global_translation
         )
-        # print((cal_body_global_rotation[...,14,:4]-body_global_rotation[...,20,:4]).max())
+        print((cal_body_global_rotation[...,14,:4]-body_global_rotation[...,20,:4]).max())
         end = time.time()
         print(f'Time cost {end - start:.5f} s')
 
