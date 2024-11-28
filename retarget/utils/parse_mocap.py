@@ -80,7 +80,7 @@ vtrdyn_full_t2zero_pose_transform_quat = vtrdyn_full_zero_pose.rebuild_pose_by_l
 
 def vtrdyn_full_zero_pose_transform(global_rotation):
     rotation = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([0., 0., 1]))
-    transformed_global_rotation = global_rotation
+    transformed_global_rotation = global_rotation.clone()
 
     transformed_global_rotation = quat_mul_norm(transformed_global_rotation, rotation)
 
@@ -105,7 +105,27 @@ vtrdyn_t2zero_pose_transform_quat = vtrdyn_zero_pose.rebuild_pose_by_local_rotat
 
 def vtrdyn_zero_pose_transform(global_rotation):
     rotation = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([0., 0., 1]))
-    transformed_global_rotation = global_rotation
+    transformed_global_rotation = global_rotation.clone()
+
+    transformed_global_rotation = quat_mul_norm(transformed_global_rotation, rotation)
+
+    transformed_global_rotation = quat_mul_norm(transformed_global_rotation,quat_inverse(vtrdyn_t2zero_pose_transform_quat))
+
+    return transformed_global_rotation
+
+# def vtrdyn_broadcast_zero_pose_transform(global_rotation):
+#     rotation = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([0, 0., 1]))
+#     transformed_global_rotation = global_rotation.clone()
+#
+#     transformed_global_rotation = quat_mul_norm(transformed_global_rotation, rotation)
+#
+#     transformed_global_rotation = quat_mul_norm(transformed_global_rotation,quat_inverse(vtrdyn_t2zero_pose_transform_quat))
+#
+#     return transformed_global_rotation
+
+def vtrdyn_broadcast_zero_pose_transform(global_rotation):
+    rotation = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([1., 0., 0]))
+    transformed_global_rotation = global_rotation.clone()
 
     transformed_global_rotation = quat_mul_norm(transformed_global_rotation, rotation)
 
@@ -121,7 +141,23 @@ if __name__ == '__main__':
     motion_global_rotation = get_vtrdyn_rotation(df)
     motion_global_translation = motion_global_translation - motion_global_translation[0, 0]
 
-    with open('asset/t_pose/vtrdyn_full_t_pose.pkl', 'rb') as f:
+    # with open('asset/t_pose/vtrdyn_full_t_pose.pkl', 'rb') as f:
+    #     vtrdyn_full_t_pose: SkeletonState = pickle.load(f)
+    #
+    # vtrdyn_zero_pose = RobotZeroPose.from_skeleton_state(
+    #     skeleton_state=vtrdyn_full_t_pose)
+    #
+    # zero_pose_local_rotation = vtrdyn_zero_pose.local_rotation.clone()
+    #
+    # zero_pose_local_rotation[12] = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([1., 0., 0.]))
+    # zero_pose_local_rotation[13] = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([0., 0, 1.]))
+    # zero_pose_local_rotation[37] = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([1., 0., 0.]))
+    # zero_pose_local_rotation[38] = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([0., 0., 1.]))
+    #
+    # vtrdyn_full_t2zero_pose_transform_quat = vtrdyn_zero_pose.rebuild_pose_by_local_rotation(zero_pose_local_rotation)
+    # vis_zero_pose([vtrdyn_zero_pose])
+
+    with open('asset/t_pose/vtrdyn_t_pose.pkl', 'rb') as f:
         vtrdyn_t_pose: SkeletonState = pickle.load(f)
 
     vtrdyn_zero_pose = RobotZeroPose.from_skeleton_state(
@@ -129,11 +165,13 @@ if __name__ == '__main__':
 
     zero_pose_local_rotation = vtrdyn_zero_pose.local_rotation.clone()
 
-    zero_pose_local_rotation[12] = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([1., 0., 0.]))
-    zero_pose_local_rotation[13] = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([0., 0, 1.]))
-    zero_pose_local_rotation[37] = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([1., 0., 0.]))
-    zero_pose_local_rotation[38] = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([0., 0., 1.]))
+    zero_pose_local_rotation[18] = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([1., 0., 0.]))
+    zero_pose_local_rotation[19] = quat_from_angle_axis(torch.tensor(-torch.pi / 2), torch.tensor([0., 0, 1.]))
+    zero_pose_local_rotation[14] = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([1., 0., 0.]))
+    zero_pose_local_rotation[15] = quat_from_angle_axis(torch.tensor(torch.pi / 2), torch.tensor([0., 0., 1.]))
 
-    vtrdyn_full_t2zero_pose_transform_quat = vtrdyn_zero_pose.rebuild_pose_by_local_rotation(zero_pose_local_rotation)
+    vtrdyn_t2zero_pose_transform_quat = vtrdyn_zero_pose.rebuild_pose_by_local_rotation(zero_pose_local_rotation)
     vis_zero_pose([vtrdyn_zero_pose])
+
+
 

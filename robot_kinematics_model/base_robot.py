@@ -60,6 +60,9 @@ class RobotZeroPose:
     def num_joints(self):
         return self._num_joints
     @property
+    def num_dofs(self):
+        return self.num_joints-1
+    @property
     def node_names(self):
         return self._node_names
     @property
