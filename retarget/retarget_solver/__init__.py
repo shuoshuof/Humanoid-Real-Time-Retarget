@@ -8,7 +8,9 @@
 
 from retarget.retarget_solver.retarget_solver import HuUpperBodyFromMocapRetarget
 from retarget.retarget_solver.body_retargeter import Mocap2HuBodyRetargeter
+from retarget.retarget_solver.full_body_retargeter import VtrdynFullBodyRetargeter
+from retarget.retarget_solver.full_body_pos_retargeter import VtrdynFullBodyPosRetargeter
 
-__all__ = ['HuUpperBodyFromMocapRetarget','Mocap2HuBodyRetargeter']
+__all__ = ['HuUpperBodyFromMocapRetarget','Mocap2HuBodyRetargeter','VtrdynFullBodyRetargeter','VtrdynFullBodyPosRetargeter']
 
 
