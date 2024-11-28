@@ -14,12 +14,12 @@ import pickle
 import cv2
 from sim.mocap_env import MocapControlEnv
 from robot_kinematics_model.base_robot import RobotZeroPose
-
-from retarget.utils.parse_mocap import get_vtrdyn_translation
+from poselib.poselib.core.rotation3d import *
+from retarget.utils.parse_mocap import get_vtrdyn_translation,vtrdyn_zero_pose_transform,vtrdyn_broadcast_zero_pose_transform
 from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch, to_numpy
 
-from retarget.retarget_solver import VtrdynFullBodyRetargeter
+from retarget.retarget_solver import VtrdynFullBodyPosRetargeter
 from mocap_communication.mocap_receiver import MocapReceiver
 
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     vtrdyn_full_zero_pose = RobotZeroPose.from_skeleton_state(vtrdyn_full_zero_pose)
     hu_zero_pose = RobotZeroPose.from_urdf('asset/hu/hu_v5.urdf')
 
-    hu_retarget = VtrdynFullBodyRetargeter(vtrdyn_full_zero_pose,hu_zero_pose)
+    hu_retarget = VtrdynFullBodyPosRetargeter(vtrdyn_full_zero_pose,hu_zero_pose)
     mocap_control_env = MocapControlEnv()
 
     recorder = DataRecorder('data')
@@ -81,6 +81,9 @@ if __name__ == '__main__':
 
     receiver_thread = threading.Thread(target=receiver.run)
     receiver_thread.start()
+
+    data_list = []
+
     if receiver.has_connected.wait(timeout=20):
     # if True:
         last_dof_pose = torch.zeros(31 - 1)
@@ -92,19 +95,30 @@ if __name__ == '__main__':
             data_dict = receiver.get_data_dict()
             body_pos = data_dict['body_pos']
 
-            if not np.allclose(body_pos,0):
+            if data_dict is not None and not np.allclose(body_pos,0):
+                data_list.append(data_dict)
                 # preprocess data
-                body_quat = to_torch(data_dict['body_quat'])
-                body_quat = body_quat[[0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]]
+                # body_quat = to_torch(data_dict['body_quat'])
+                # body_quat = body_quat[[0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]]
+                # full_body_quat = quat_identity([59,])
+                # full_body_quat[[0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 34, 35, 36, 37, 38, 39, 11, 12, 13, 14]] = body_quat
+                # full_body_quat = vtrdyn_full_zero_pose_transform(full_body_quat)
+                # body_quat = full_body_quat[[[0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 34, 35, 36, 37, 38, 39, 11, 12, 13, 14]]]
+
+                # body_quat = to_torch(data_dict['body_quat'])
+                # body_quat = body_quat[[0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]]
+                # body_quat = vtrdyn_broadcast_zero_pose_transform(body_quat)
+
+
 
                 body_pos = to_torch(data_dict['body_pos'])
                 body_pos = body_pos[[0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]]
 
-                left_hand_pos = to_torch(data_dict['left_hand_pos'])
-                right_hand_pos = to_torch(data_dict['right_hand_pos'])
+                left_hand_pos = to_torch(data_dict['left_hand_pos'])[[0, 4,5,6,7, 8,9,10,11, 16,17,18,19, 12,13,14,15, 1,2,3]]
+                right_hand_pos = to_torch(data_dict['right_hand_pos'])[[0, 4,5,6,7, 8,9,10,11, 16,17,18,19, 12,13,14,15, 1,2,3]]
 
-                _, dof_pos = hu_retarget.retarget(
-                    body_quat,
+
+                _, dof_pos,_ = hu_retarget.retarget(
                     body_pos,
                     left_hand_pos,
                     right_hand_pos
@@ -122,5 +136,6 @@ if __name__ == '__main__':
 
     receiver.stop()
     receiver_thread.join()
-
-    recorder.save()
+    with open('data/test_data2.pkl','wb') as f:
+        pickle.dump(data_list,f)
+    # recorder.save()

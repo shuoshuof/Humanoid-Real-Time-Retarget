@@ -127,7 +127,11 @@ class Env:
                          for (idx, value) in enumerate(self.gym.get_asset_dof_names(asset))}
         print(self.dof_dict)
 
+        rigid_shape_props = self.gym.get_actor_rigid_shape_properties(env, robot_handle)
+        for rigid_shape_prop in rigid_shape_props:
+            rigid_shape_prop.friction = 10
 
+        self.gym.set_actor_rigid_shape_properties(env, robot_handle, rigid_shape_props)
         return robot_handle
 
     def _create_center_camera(self, env):
@@ -158,9 +162,10 @@ class Env:
         return table_handle
     def _add_object(self, env, env_idx):
         cube_asset_options = gymapi.AssetOptions()
-        cube_asset_options.density = 10
+        cube_asset_options.density = 100
         cube_asset_options.thickness = 0.001
-        cube_asset = self.gym.create_box(self.sim, 0.07, 0.07, 0.07, cube_asset_options)
+
+        cube_asset = self.gym.create_box(self.sim, 0.05, 0.05, 0.05, cube_asset_options)
 
         pose = gymapi.Transform()
         pose.p = gymapi.Vec3(-0.2, random.uniform(-0.15,0.05), 1.3)
@@ -169,6 +174,11 @@ class Env:
         cube_handle = self.gym.create_actor(env, cube_asset, pose, 'cube', env_idx,-1)
         color = gymapi.Vec3(1, 0., 0.)
         self.gym.set_rigid_body_color(env, cube_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
+
+
+        rigid_shape_props = self.gym.get_actor_rigid_shape_properties(env, cube_handle)
+        rigid_shape_props[0].friction = 10
+        self.gym.set_actor_rigid_shape_properties(env, cube_handle, rigid_shape_props)
         return cube_handle
     def _add_target(self,env,env_idx):
         target_asset_options = gymapi.AssetOptions()
@@ -176,7 +186,7 @@ class Env:
         target_asset_options.disable_gravity = True
         target_asset = self.gym.create_box(self.sim, 0.15, 0.15, 0.00001, target_asset_options)
         pose = gymapi.Transform()
-        pose.p = gymapi.Vec3(0, 0, 1.125001)
+        pose.p = gymapi.Vec3(-0.1, 0, 1.125001)
         pose.r = gymapi.Quat(0, 0, 0, 1)
         target_handle = self.gym.create_actor(env, target_asset, pose, 'target', env_idx+1,0)
         color = gymapi.Vec3(0., 1, 0.)
