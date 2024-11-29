@@ -69,7 +69,7 @@ class Env:
 
         self.env_handles = []
         self.robot_handles = []
-        self.cube_handles = []
+        self.object_handles = []
         self.table_handles = []
         self.target_handles = []
         self.left_cam_handles = []
@@ -83,8 +83,8 @@ class Env:
             table_handle = self._add_table(env_handle,i)
             self.table_handles.append(table_handle)
 
-            cube_handle = self._add_object(env_handle,i)
-            self.cube_handles.append(cube_handle)
+            object_handle = self._add_object(env_handle,i)
+            self.object_handles.append(object_handle)
 
             target_handle = self._add_target(env_handle,i)
             self.target_handles.append(target_handle)
@@ -132,7 +132,22 @@ class Env:
             rigid_shape_prop.friction = 10
 
         self.gym.set_actor_rigid_shape_properties(env, robot_handle, rigid_shape_props)
+        self._set_dof_properties(env,robot_handle)
+
         return robot_handle
+    def _set_dof_properties(self,env,robot_handle):
+        dof_props = self.gym.get_actor_dof_properties(env, robot_handle)
+        for dof_kp in dof_props["stiffness"]:
+            pass
+        for dof_kd in dof_props["damping"]:
+            dof_kd = 10
+        dof_props["damping"][self.dof_dict['left_gripper_left_joint']] = 10
+        dof_props["damping"][self.dof_dict['left_gripper_right_joint']] = 10
+
+        dof_props["damping"][self.dof_dict['right_gripper_left_joint']] = 10
+        dof_props["damping"][self.dof_dict['right_gripper_right_joint']] = 10
+
+        self.gym.set_actor_dof_properties(env, robot_handle, dof_props)
 
     def _create_center_camera(self, env):
         camera_props = gymapi.CameraProperties()
@@ -161,30 +176,35 @@ class Env:
         self.gym.set_rigid_body_color(env, table_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
         return table_handle
     def _add_object(self, env, env_idx):
-        cube_asset_options = gymapi.AssetOptions()
-        cube_asset_options.density = 100
-        cube_asset_options.thickness = 0.001
+        object_asset_options = gymapi.AssetOptions()
+        object_asset_options.density = 10
+        object_asset_options.thickness = 0.001
 
-        cube_asset = self.gym.create_box(self.sim, 0.05, 0.05, 0.05, cube_asset_options)
+        # cube_asset = self.gym.create_box(self.sim, 0.05, 0.05, 0.05, object_asset_options)
+
+        asset_root = "asset/teleop/"
+        asset_path = 'cylinder.urdf'
+
+        object_asset = self.gym.load_asset(self.sim, asset_root, asset_path, object_asset_options)
 
         pose = gymapi.Transform()
         pose.p = gymapi.Vec3(-0.2, random.uniform(-0.15,0.05), 1.3)
         # pose.p = gymapi.Vec3(-0.2, -0.2, 1.3)
         pose.r = gymapi.Quat(0, 0, 0, 1)
-        cube_handle = self.gym.create_actor(env, cube_asset, pose, 'cube', env_idx,-1)
+        object_handle = self.gym.create_actor(env, object_asset, pose, 'cylinder', env_idx,-1)
         color = gymapi.Vec3(1, 0., 0.)
-        self.gym.set_rigid_body_color(env, cube_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
+        self.gym.set_rigid_body_color(env, object_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, color)
 
 
-        rigid_shape_props = self.gym.get_actor_rigid_shape_properties(env, cube_handle)
+        rigid_shape_props = self.gym.get_actor_rigid_shape_properties(env, object_handle)
         rigid_shape_props[0].friction = 10
-        self.gym.set_actor_rigid_shape_properties(env, cube_handle, rigid_shape_props)
-        return cube_handle
+        self.gym.set_actor_rigid_shape_properties(env, object_handle, rigid_shape_props)
+        return object_handle
     def _add_target(self,env,env_idx):
         target_asset_options = gymapi.AssetOptions()
         target_asset_options.density = 1
         target_asset_options.disable_gravity = True
-        target_asset = self.gym.create_box(self.sim, 0.15, 0.15, 0.00001, target_asset_options)
+        target_asset = self.gym.create_box(self.sim, 0.1, 0.1, 0.00001, target_asset_options)
         pose = gymapi.Transform()
         pose.p = gymapi.Vec3(-0.1, 0, 1.125001)
         pose.r = gymapi.Quat(0, 0, 0, 1)
