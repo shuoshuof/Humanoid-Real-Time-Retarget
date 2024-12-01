@@ -2,7 +2,7 @@
 """
 @Time ： 2024/11/25 11:47
 @Auth ： shuoshuof
-@File ：mocap_env.py
+@File ：isaac_teleop_env.py
 @Project ：Humanoid-Real-Time-Retarget
 """
 from isaacgym import gymtorch, gymapi

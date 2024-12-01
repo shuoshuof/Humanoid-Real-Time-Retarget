@@ -177,15 +177,15 @@ class Env:
         return table_handle
     def _add_object(self, env, env_idx):
         object_asset_options = gymapi.AssetOptions()
-        object_asset_options.density = 10
+        object_asset_options.density = 50
         object_asset_options.thickness = 0.001
 
-        # cube_asset = self.gym.create_box(self.sim, 0.05, 0.05, 0.05, object_asset_options)
+        object_asset = self.gym.create_box(self.sim, 0.05, 0.08  , 0.08, object_asset_options)
 
-        asset_root = "asset/teleop/"
-        asset_path = 'cylinder.urdf'
-
-        object_asset = self.gym.load_asset(self.sim, asset_root, asset_path, object_asset_options)
+        # asset_root = "asset/teleop/"
+        # asset_path = 'cylinder.urdf'
+        #
+        # object_asset = self.gym.load_asset(self.sim, asset_root, asset_path, object_asset_options)
 
         pose = gymapi.Transform()
         pose.p = gymapi.Vec3(-0.2, random.uniform(-0.15,0.05), 1.3)
@@ -197,7 +197,7 @@ class Env:
 
 
         rigid_shape_props = self.gym.get_actor_rigid_shape_properties(env, object_handle)
-        rigid_shape_props[0].friction = 10
+        rigid_shape_props[0].friction = 20
         self.gym.set_actor_rigid_shape_properties(env, object_handle, rigid_shape_props)
         return object_handle
     def _add_target(self,env,env_idx):
