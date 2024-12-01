@@ -12,7 +12,7 @@ import cv2
 from mocap_communication.server_receive import Receiver
 from mocap_communication.server_send import Transmitter
 
-from sim.mocap_env import MocapControlEnv
+from sim.isaac_teleop_env import MocapControlEnv
 from retarget.torch_ext import to_torch
 def process_data(img,dof_state):
     img = img[:, 180:-180]

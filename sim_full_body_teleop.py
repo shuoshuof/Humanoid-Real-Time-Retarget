@@ -12,7 +12,7 @@ from collections import OrderedDict
 import time
 import pickle
 import cv2
-from sim.mocap_env import MocapControlEnv
+from sim.isaac_teleop_env import MocapControlEnv
 from robot_kinematics_model.base_robot import RobotZeroPose
 from poselib.poselib.core.rotation3d import *
 from retarget.utils.parse_mocap import get_vtrdyn_translation,vtrdyn_zero_pose_transform,vtrdyn_broadcast_zero_pose_transform
@@ -26,17 +26,14 @@ from mocap_communication.mocap_receiver import MocapReceiver
 
 class DataRecorder:
     def __init__(self,save_dir):
-        self.body_pose = []
         self.dof_pos = []
         self.dof_state = []
         self.img = []
         self.save_dir = save_dir
 
-    def record(self,body_pose,dof_pos,dof_state,img):
+    def record(self,dof_pos,dof_state,img):
         # map_indices = [14,15,16,17,18, 23,24,25,26,27]
         map_indices = np.arange(len(dof_pos))
-        if body_pose is not None:
-            self.body_pose.append(to_numpy(body_pose))
         self.dof_pos.append(to_numpy(dof_pos).astype(np.float32)[map_indices])
         self.dof_state.append(self.process_dof_state(dof_state)[map_indices])
         self.img.append(self.process_img(img))
@@ -52,7 +49,6 @@ class DataRecorder:
 
     def save(self):
         data_dict = OrderedDict(
-            body_pos=np.stack(self.body_pose),
             dof_pos=np.stack(self.dof_pos),
             dof_state=np.stack(self.dof_state),
             img=np.stack(self.img)
@@ -109,8 +105,6 @@ if __name__ == '__main__':
                 # body_quat = body_quat[[0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]]
                 # body_quat = vtrdyn_broadcast_zero_pose_transform(body_quat)
 
-
-
                 body_pos = to_torch(data_dict['body_pos'])
                 body_pos = body_pos[[0, 1, 2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]]
 
@@ -129,13 +123,13 @@ if __name__ == '__main__':
                 dof_pos = last_dof_pose
             # _, dof_pos = hu_retarget.retarget_from_global_translation(motion_global_translation[i])
             dof_state, viewer_img = mocap_control_env.step(dof_pos)
-            recorder.record(body_pos, dof_pos, dof_state, viewer_img)
+            recorder.record(dof_pos, dof_state, viewer_img)
 
             end = time.time()
             # print(f"{end - start:.3f}")
 
     receiver.stop()
     receiver_thread.join()
-    with open('data/test_data2.pkl','wb') as f:
-        pickle.dump(data_list,f)
-    # recorder.save()
+    # with open('data/test_data2.pkl','wb') as f:
+    #     pickle.dump(data_list,f)
+    recorder.save()

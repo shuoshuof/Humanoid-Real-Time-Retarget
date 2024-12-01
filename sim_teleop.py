@@ -11,7 +11,7 @@ from collections import OrderedDict
 import time
 import pickle
 import cv2
-from sim.mocap_env import MocapControlEnv
+from sim.isaac_teleop_env import MocapControlEnv
 from robot_kinematics_model.base_robot import RobotZeroPose
 
 from retarget.utils.parse_mocap import get_vtrdyn_translation
@@ -19,7 +19,7 @@ from retarget.spatial_transform.transform3d import *
 from retarget.torch_ext import to_torch, to_numpy
 
 from retarget.retarget_solver import HuUpperBodyFromMocapRetarget
-from mocap_communication.receive import MocapReceiver
+from mocap_communication.mocap_receiver import MocapReceiver
 
 
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             if not receiver.is_connected():
                 break
 
-            body_pose = receiver.get_body_pose()
+            body_pose = receiver.get_data_dict()
 
             if body_pose is not None:
                 body_pose = to_torch(body_pose)
