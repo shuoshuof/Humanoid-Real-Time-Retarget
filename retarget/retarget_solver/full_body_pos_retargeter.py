@@ -5,6 +5,8 @@
 @File ：hand_retargeter.py
 @Project ：Humanoid-Real-Time-Retarget
 """
+import torch
+
 from retarget.retarget_solver.base_retargeter import BaseHumanoidRetargeter
 from retarget.spatial_transform.transform3d import *
 from retarget.robot_config.Hu_v5 import Hu_DOF_AXIS
@@ -13,9 +15,13 @@ from robot_kinematics_model import RobotZeroPose, cal_local_rotation
 
 
 class VtrdynFullBodyPosRetargeter(BaseHumanoidRetargeter):
-    def __init__(self, mocap_zero_pose: RobotZeroPose, target_zero_pose: RobotZeroPose):
+    def __init__(
+            self, mocap_zero_pose: RobotZeroPose,
+            target_zero_pose: RobotZeroPose,
+            precise_gripper=False
+    ):
         super().__init__(mocap_zero_pose, target_zero_pose)
-
+        self.precise_gripper = precise_gripper
     def retarget(
             self,
             body_global_translation,
@@ -173,9 +179,10 @@ class VtrdynFullBodyPosRetargeter(BaseHumanoidRetargeter):
             dof_pos,
             body_global_rotation,
             left_hand_global_translation,
-            right_hand_global_translation
+            right_hand_global_translation,
     ):
         orig_hand_x_dist_to_wrist = self.source_zero_pose.global_translation[[18,22,26,30,33],0]-self.source_zero_pose.global_translation[14,0]
+        orig_hand_avg_x_dist = orig_hand_x_dist_to_wrist.mean()
 
         left_wrist_global_quat = body_global_rotation[14]
         # transform to left wrist frame
@@ -186,23 +193,28 @@ class VtrdynFullBodyPosRetargeter(BaseHumanoidRetargeter):
         # transform to right wrist frame
         right_hand_global_translation = quat_rotate(quat_inverse(right_wrist_global_quat), right_hand_global_translation)
         right_hand_x_dist_to_wrist = (right_hand_global_translation-right_hand_global_translation[0])[[4,8,12,16,19],0]
+        left_avg_x_dist = left_hand_x_dist_to_wrist.mean()
+        right_avg_x_dist = right_hand_x_dist_to_wrist.mean()
 
-        left_avg_dist = left_hand_x_dist_to_wrist.mean()
-        right_avg_dist = right_hand_x_dist_to_wrist.mean()
+        if self.precise_gripper:
+            left_stretch = torch.clip(left_avg_x_dist/orig_hand_avg_x_dist - 0.5,0,0.5)/0.5
+            dof_pos[19 - 1] = left_stretch*0.044
+            dof_pos[20 - 1] = left_stretch*-0.044
 
-        left_close = left_avg_dist/orig_hand_x_dist_to_wrist.mean() < 0.7
-        right_close = right_avg_dist/orig_hand_x_dist_to_wrist.mean() < 0.7
+            right_stretch = torch.clip(right_avg_x_dist/orig_hand_avg_x_dist - 0.5,0,0.5)/0.5
+            dof_pos[28-1] = right_stretch*0.044
+            dof_pos[29-1] = right_stretch*-0.044
+        else:
+            left_close = left_avg_x_dist/orig_hand_avg_x_dist < 0.7
+            right_close = right_avg_x_dist/orig_hand_avg_x_dist < 0.7
 
+            dof_pos[19 - 1] = 0 if left_close else 0.044
+            dof_pos[20 - 1] = 0 if left_close else -0.044
 
-        dof_pos[19 - 1] = 0 if left_close else 0.044
-        dof_pos[20 - 1] = 0 if left_close else -0.044
-
-        dof_pos[28-1] = 0 if right_close else 0.044
-        dof_pos[29-1] = 0 if right_close else -0.044
-        print(left_close,right_close)
+            dof_pos[28-1] = 0 if right_close else 0.044
+            dof_pos[29-1] = 0 if right_close else -0.044
+            # print(left_close,right_close)
         return dof_pos
-
-
 
 
 @torch.jit.script
