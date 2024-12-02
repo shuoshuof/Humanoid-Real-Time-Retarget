@@ -69,11 +69,11 @@ if __name__ == '__main__':
     vtrdyn_full_zero_pose = RobotZeroPose.from_skeleton_state(vtrdyn_full_zero_pose)
     hu_zero_pose = RobotZeroPose.from_urdf('asset/hu/hu_v5.urdf')
 
-    hu_retarget = VtrdynFullBodyPosRetargeter(vtrdyn_full_zero_pose,hu_zero_pose)
+    hu_retarget = VtrdynFullBodyPosRetargeter(vtrdyn_full_zero_pose,hu_zero_pose,precise_gripper=True)
     mocap_control_env = MocapControlEnv()
 
     recorder = DataRecorder('data')
-    receiver = MocapReceiver('192.168.1.167', 12345)
+    receiver = MocapReceiver('192.168.1.174', 12345)
 
     receiver_thread = threading.Thread(target=receiver.run)
     receiver_thread.start()

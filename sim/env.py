@@ -39,16 +39,19 @@ class Env:
     def set_sim_parameters(self):
         sim_params = gymapi.SimParams()
 
-        sim_params.dt = 1 / 60
-        sim_params.substeps = 2
+        sim_params.dt = 1 / 240
+        sim_params.substeps = 8
         sim_params.up_axis = gymapi.UP_AXIS_Z
         sim_params.gravity = gymapi.Vec3(0.0, 0.0, -9.81)
 
         sim_params.physx.solver_type = 1
-        sim_params.physx.num_position_iterations = 4
-        sim_params.physx.num_velocity_iterations = 1
+        sim_params.physx.num_position_iterations = 16
+        sim_params.physx.num_velocity_iterations = 0
         sim_params.physx.max_gpu_contact_pairs = 8388608
         sim_params.physx.contact_offset = 0.002
+        sim_params.physx.rest_offset = 0.0
+
+
         sim_params.physx.friction_offset_threshold = 0.001
         sim_params.physx.friction_correlation_distance = 0.0005
         sim_params.physx.rest_offset = 0.0
@@ -182,10 +185,10 @@ class Env:
 
         object_asset = self.gym.create_box(self.sim, 0.05, 0.08  , 0.08, object_asset_options)
 
-        # asset_root = "asset/teleop/"
-        # asset_path = 'cylinder.urdf'
-        #
-        # object_asset = self.gym.load_asset(self.sim, asset_root, asset_path, object_asset_options)
+        asset_root = "asset/teleop/"
+        asset_path = 'cylinder.urdf'
+
+        object_asset = self.gym.load_asset(self.sim, asset_root, asset_path, object_asset_options)
 
         pose = gymapi.Transform()
         pose.p = gymapi.Vec3(-0.2, random.uniform(-0.15,0.05), 1.3)
